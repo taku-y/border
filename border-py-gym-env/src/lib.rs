@@ -1,6 +1,6 @@
 //! A wrapper of [gym](https://gym.openai.com) environments on Python.
 //!
-//! This crate uses python>=3.8 and [`gym`](https://pypi.org/project/gym/)>=0.26 via [`PyO3`].
+//! This crate uses python>=3.8 and [`gym`]>=0.26 via [`PyO3`].
 //! 
 //! ## Example
 //! 
@@ -108,7 +108,7 @@
 //! `f32` means that `PyObsDtype` is converted to `f32`. So an agent must be able to
 //! handle `f32` array as an observation. The type of `PyGymEnvDiscreteAct` is a set of `i32`.
 //! 
-//! ```ignore
+//! ```no_run
 //! type PyObsDtype = f32;
 //!
 //! type Obs = PyGymEnvObs<PyObsDtype, f32>;
@@ -125,7 +125,7 @@
 //! ([`PyGymEnvDiscreteAct`]) into Python objects in order for them to be sent to the
 //! environment.
 //! 
-//! ```ignore
+//! ```no_run
 //! type ObsFilter = PyGymEnvObsRawFilter<PyObsDtype, f32, Obs>;
 //! type ActFilter = PyGymEnvDiscreteActRawFilter<Act>;
 //! ```
@@ -133,7 +133,7 @@
 //! [`PyGymEnv`] has four type parameters of observation, action, observation filter and
 //! action filter.
 //! 
-//! ```ignore
+//! ```no_run
 //! type Env = PyGymEnv<Obs, Act, ObsFilter, ActFilter>;
 //! ```
 //! 
@@ -145,7 +145,7 @@
 //! parameters. `RandomPolicyConfig` is configuration type without any field.
 //! It should be noted that [`Policy::Config`] must implements [`Clone`] trait.
 //! 
-//! ```ignore
+//! ```no_run
 //! #[derive(Clone)]
 //! struct RandomPolicyConfig;
 //!
@@ -155,7 +155,7 @@
 //! There are two methods in [`Policy`] trait. [`Policy::build`] builds an instance
 //! given a `config`. [`Policy::sample`] emits an action (discrete action in this example).
 //! 
-//! ```ignore
+//! ```no_run
 //! impl Policy<Env> for RandomPolicy {
 //!     type Config = RandomPolicyConfig;
 //!
@@ -176,7 +176,7 @@
 //! This type has four fields: index of episode (`episode`), index of steps of interactions
 //! (`step`), immediate reward (`reward`) and observation (`obs`).
 //! 
-//! ```ignore
+//! ```no_run
 //! #[derive(Debug, Serialize)]
 //! struct CartpoleRecord {
 //!     episode: usize,
@@ -187,10 +187,10 @@
 //! ```
 //! 
 //! The sequence of states in an episode will be recorded as a sequence of 
-//! [`border_core::record::Record`]. Those are converted to [`CartpoleRecord`]
+//! [`border_core::record::Record`]. Those are converted to `CartpoleRecord`
 //! with a custom converter as show below: 
 //! 
-//! ```ignore
+//! ```no_run
 //! impl TryFrom<&Record> for CartpoleRecord {
 //!     type Error = anyhow::Error;
 //!
@@ -217,7 +217,7 @@
 //! to [`PyGymEnvConfig`]. We also give a string "CartPole-v1", the name of the 
 //! environment for this example. These names are registered in [`gym`].
 //! 
-//! ```ignore
+//! ```no_run
 //! let env_config = PyGymEnvConfig::default()
 //!     .name("CartPole-v1".to_string())
 //!     .render_mode(Some("human".to_string()))
@@ -232,7 +232,7 @@
 //! In this example, `RandomPolicy` can be initialized without `RandomPolicyConfig`,
 //! because `RandomPolicy` has no parameter.
 //! 
-//! ```ignore
+//! ```no_run
 //! let mut env = Env::build(&env_config, 0)?;
 //! let mut recorder = BufferedRecorder::new();
 //! env.set_render(true);
@@ -242,13 +242,13 @@
 //! With these instances, we can run episodes. `5` means the number of episodes.
 //! The sequence of states for 5 episodes will be recorded in `recorder`.
 //! 
-//! ```ignore
+//! ```no_run
 //! let _ = util::eval_with_recorder(&mut env, &mut policy, 5, &mut recorder)?;
 //! ```
 //! 
 //! Lastly, we convert sequence of [`Record`]s and write them into a CSV file.
 //! 
-//! ```ignore
+//! ```no_run
 //! for record in recorder.iter() {
 //!     wtr.serialize(CartpoleRecord::try_from(record)?)?;
 //! }
@@ -289,6 +289,7 @@
 //! [`BufferedRecorder`]: border_core::record::BufferedRecorder
 //! [`Recorder`]: border_core::record::Recorder
 //! [`Record`]: border_core::record::Record
+//! [`gym`]: https://pypi.org/project/gym/
 mod act_c;
 mod act_d;
 mod atari;
