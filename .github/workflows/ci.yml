@@ -68,6 +68,9 @@ jobs:
         - name: Test border-py-gym-env
           run: cargo test -p border-py-gym-env
 
+        - name: Test border-tch-agent
+          run: cargo test -p border-tch-agent
+
         - if: matrix.os == 'ubuntu-latest'
           name: Test border
           run: |
