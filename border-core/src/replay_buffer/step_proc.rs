@@ -2,9 +2,10 @@
 use std::{default::Default, marker::PhantomData};
 use crate::{Obs, Env, StepProcessorBase};
 use super::{StdBatch, SubBatch};
+use serde::{Deserialize, Serialize};
 
 /// Configuration of [SimpleStepProcessor].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SimpleStepProcessorConfig {
 }
 
