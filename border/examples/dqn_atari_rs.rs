@@ -10,18 +10,16 @@ use border_core::{
         SimpleReplayBuffer, SimpleReplayBufferConfig, SimpleStepProcessor,
         SimpleStepProcessorConfig,
     },
-    util, Policy, Agent, Env as _, Trainer, TrainerConfig,
+    util, Agent, Env as _, Policy, Trainer, TrainerConfig,
 };
 use border_derive::{Act, SubBatch};
 use border_tch_agent::{
     cnn::Cnn,
-    dqn::{DqnConfig, Dqn as Dqn_},
+    dqn::{Dqn as Dqn_, DqnConfig},
     TensorSubBatch,
 };
 use clap::{App, Arg, ArgMatches};
 use util_dqn_atari::{model_dir as model_dir_, Params};
-
-type ObsDtype = u8;
 
 // #[derive(Debug, Clone, Obs)]
 // struct Obs(BorderAtariObs);
@@ -133,11 +131,20 @@ fn show_config(
     env_config: &EnvConfig,
     agent_config: &DqnConfig<Cnn>,
     trainer_config: &TrainerConfig,
+    step_proc_config: &SimpleStepProcessorConfig,
+    replay_buffer_config: &SimpleReplayBufferConfig,
 ) {
     println!("Device: {:?}", tch::Device::cuda_if_available());
+    println!("<EnvConfig>");
     println!("{}", serde_yaml::to_string(&env_config).unwrap());
+    println!("<DqnConfig>");
     println!("{}", serde_yaml::to_string(&agent_config).unwrap());
+    println!("<TrainerConfig>");
     println!("{}", serde_yaml::to_string(&trainer_config).unwrap());
+    println!("<SimpleStepProcessorConfig>");
+    println!("{}", serde_yaml::to_string(&step_proc_config).unwrap());
+    println!("<SimpleReplayBufferConfig>");
+    println!("{}", serde_yaml::to_string(&replay_buffer_config).unwrap());
 }
 
 fn model_dir(matches: &ArgMatches) -> Result<String> {
@@ -201,7 +208,13 @@ fn train(matches: ArgMatches) -> Result<()> {
     let step_proc_config = SimpleStepProcessorConfig {};
 
     if matches.is_present("show-config") {
-        show_config(&env_config_train, &agent_config, &trainer_config);
+        show_config(
+            &env_config_train,
+            &agent_config,
+            &trainer_config,
+            &step_proc_config,
+            &replay_buffer_config,
+        );
     } else {
         let mut trainer = Trainer::<Env, StepProc, ReplayBuffer>::build(
             trainer_config,
