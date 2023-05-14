@@ -50,6 +50,8 @@ pub use sampler::SyncSampler;
 ///     6. If `opt_steps == max_opts`, finish training loop.
 /// 6. Back to step 3.
 ///
+#[doc=include_str!("../image/train_loop.svg")]
+///
 /// # Interaction of objects
 ///
 /// In [`Trainer::train()`] method, objects interact as shown below:

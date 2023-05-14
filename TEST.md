@@ -8,6 +8,8 @@
 * border-py-gym-env
   * test test_random_cartpole ... ok
   * test test_lunalander_cont ... ok
+* border-tch-agent
+  * 
 * border
   * test util::url::tests::test_get_model_from_url ... ok
   * test tests::test_dqn_cartpole ... ok
