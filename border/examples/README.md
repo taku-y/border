@@ -63,6 +63,7 @@ PYTHONPATH=./border-py-gym-env/examples cargo run --example sac_lunarlander_cont
   ```
 
   ```bash
+  # There shall be a trained model in ./examples/model/dqn_PongNoFrameskip-v4
   PYTHONPATH=./border-py-gym-env/examples cargo run --release --example dqn_atari --features="tch" -- PongNoFrameskip-v4 --play ./examples/model/dqn_PongNoFrameskip-v4
   ```
 
@@ -88,4 +89,11 @@ PYTHONPATH=./border-py-gym-env/examples cargo run --example sac_lunarlander_cont
 
 ```bash
 cargo run --example random_pong
+```
+
+### DQN
+
+```bash
+# Run training (pong is the name of the ROM)
+cargo run --release --example dqn_atari_rs --features=tch -- dqn_atari_rs pong
 ```
