@@ -31,3 +31,10 @@ mkdir $HOME/atari_rom
 AutoROM --install-dir $HOME/atari_rom
 export ATARI_ROM_DIR=$HOME/atari_rom
 ```
+
+## Run Mujoco-py example
+
+```bash
+cd $HOME/mujoco-py/example
+python body_interaction.py
+```

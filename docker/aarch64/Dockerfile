@@ -78,7 +78,6 @@ RUN source /home/ubuntu/venv/bin/activate && pip3 install torch==1.12.0
 RUN source /home/ubuntu/venv/bin/activate && pip3 install ipython jupyterlab
 RUN source /home/ubuntu/venv/bin/activate && pip3 install numpy==1.21.3
 RUN source /home/ubuntu/venv/bin/activate && pip3 install gym[box2d]==0.26.2
-# RUN source /home/ubuntu/venv/bin/activate && pip3 install gym[box2d]==0.17.1
 RUN source /home/ubuntu/venv/bin/activate && pip3 install robosuite==1.3.2
 RUN source /home/ubuntu/venv/bin/activate && pip3 install -U 'mujoco-py<2.2,>=2.1'
 RUN source /home/ubuntu/venv/bin/activate && pip3 install dm-control==1.0.8
@@ -114,6 +113,12 @@ RUN cd $HOME && \
 # Tweaks for version incompatibility of gym and pybullet-gym
 RUN sed -i 's/return state, sum(self.rewards), bool(done), {}/return state, sum(self.rewards), bool(done), bool(done), {}/g' /home/ubuntu/pybullet-gym/pybulletgym/envs/roboschool/envs/locomotion/walker_base_env.py
 RUN sed -i 's/id='\''AntPyBulletEnv-v0'\'',/id='\''AntPyBulletEnv-v0'\'', order_enforce=False,/g' /home/ubuntu/pybullet-gym/pybulletgym/envs/__init__.py
+
+# mujoco-py examples
+RUN cd $HOME && \
+    git clone https://github.com/openai/mujoco-py.git && \
+    cd mujoco-py && \
+    git reset --hard a13903b82f1ab316815e63b3575526005b3b2ae1
 
 # .bashrc
 RUN echo 'export LIBTORCH=$HOME/venv/lib/python3.8/site-packages/torch' >> ~/.bashrc
