@@ -10,7 +10,7 @@ pub trait ExperienceBufferBase {
     /// Items pushed into the buffer.
     type PushedItem;
 
-    /// Pushes a transition into the buffer.
+    /// Pushes transitions into the buffer.
     fn push(&mut self, tr: Self::PushedItem) -> Result<()>;
 
     /// The number of samples in the buffer.

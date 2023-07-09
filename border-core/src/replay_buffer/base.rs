@@ -160,15 +160,16 @@ where
     }
 
     fn batch(&mut self, size: usize) -> anyhow::Result<Self::Batch> {
-        let (ixs, weight) = if let Some(per_state) = &self.per_state {
-            let sum_tree = &per_state.sum_tree;
+        let (ixs, weight) = if let Some(per_state) = &mut self.per_state {
+            // Prioritized sampling
+            let sum_tree = &mut per_state.sum_tree;
             let beta = per_state.iw_scheduler.beta();
             let (ixs, weight) = sum_tree.sample(size, beta);
             let ixs = ixs.iter().map(|&ix| ix as usize).collect();
             (ixs, Some(weight))
         } else {
             let ixs = (0..size)
-                // .map(|_| self.rng.usize(..self.size))
+                // Uniform sampling
                 .map(|_| (self.rng.next_u32() as usize) % self.size)
                 .collect::<Vec<_>>();
             let weight = None;
@@ -186,6 +187,10 @@ where
         })
     }
 
+    /// Update priorities of samples for prioritized experience replay.
+    ///
+    /// This method also increases the number of optimization steps for scheduling
+    /// the annealinig parameter beta.
     fn update_priority(&mut self, ixs: &Option<Vec<usize>>, td_errs: &Option<Vec<f32>>) {
         if let Some(per_state) = &mut self.per_state {
             let ixs = ixs
