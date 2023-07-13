@@ -217,6 +217,11 @@ mod tests {
         sum_tree.print_tree();
         println!();
 
+        // Check the importance weights
+        println!("Importance weights");
+        println!("{:?}", sum_tree.weights(&vec![0, 1, 2, 3, 4], 0.1));
+        println!();
+
         // Check the number of samples in the sum tree
         assert_eq!(sum_tree.n_samples, data.len());
 

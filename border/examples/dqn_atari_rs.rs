@@ -21,8 +21,6 @@ use border_tch_agent::{
 use clap::{App, Arg, ArgMatches};
 use util_dqn_atari::{model_dir as model_dir_, Params};
 
-type ObsDtype = u8;
-
 // #[derive(Debug, Clone, Obs)]
 // struct Obs(BorderAtariObs);
 type Obs = BorderAtariObs;
