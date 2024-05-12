@@ -44,6 +44,8 @@ where
     pub device: Option<Device>,
     pub critic_loss: CriticLoss,
     pub record_verbose_level: usize,
+    #[serde(default)]
+    pub autocast: bool,
     pub phantom: PhantomData<Q>,
 }
 
@@ -68,6 +70,7 @@ where
             device: self.device.clone(),
             critic_loss: self.critic_loss.clone(),
             record_verbose_level: self.record_verbose_level,
+            autocast: self.autocast,
             phantom: PhantomData,
         }
     }
@@ -97,6 +100,7 @@ where
             device: None,
             critic_loss: CriticLoss::Mse,
             record_verbose_level: 0,
+            autocast: false,
             phantom: PhantomData,
         }
     }
@@ -195,6 +199,12 @@ where
     /// Sets verbose level.
     pub fn record_verbose_level(mut self, v: usize) -> Self {
         self.record_verbose_level = v;
+        self
+    }
+
+    /// Sets whether to use autocast.
+    pub fn autocast(mut self, v: bool) -> Self {
+        self.autocast = v;
         self
     }
 

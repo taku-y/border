@@ -40,6 +40,7 @@ where
     n_samples_act: usize,
     n_samples_best_act: usize,
     record_verbose_level: usize,
+    autocast: bool,
 }
 
 impl<E, Q, R> Dqn<E, Q, R>
@@ -266,6 +267,7 @@ where
             n_samples_act: 0,
             n_samples_best_act: 0,
             record_verbose_level: config.record_verbose_level,
+            autocast: config.autocast,
             phantom: PhantomData,
         }
     }
@@ -301,7 +303,10 @@ where
 
     fn opt_with_record(&mut self, buffer: &mut R) -> Record {
         let mut record = {
-            let record = self.opt_(buffer);
+            let record = match self.autocast {
+                true => tch::autocast(true, || self.opt_(buffer)),
+                false => self.opt_(buffer),
+            };
 
             match self.record_verbose_level >= 2 {
                 true => {

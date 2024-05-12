@@ -458,6 +458,9 @@ mod tch_dqn_config {
 
         #[serde(default = "default_device", skip_serializing_if = "is_default_device")]
         pub device: Option<Device>,
+
+        #[serde(default)]
+        pub autocast: bool,
         // phantom: PhantomData<CnnConfig>,
     }
 
@@ -490,6 +493,7 @@ mod tch_dqn_config {
                 critic_loss: CriticLoss::Mse,
                 record_verbose_level: 0,
                 device: None,
+                autocast: false,
                 // phantom: PhantomData,
             }
         }
