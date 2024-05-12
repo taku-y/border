@@ -298,7 +298,10 @@ where
     }
 
     fn opt(&mut self, buffer: &mut R) {
-        self.opt_(buffer);
+        match self.autocast {
+            true => tch::autocast(true, || self.opt_(buffer)),
+            false => self.opt_(buffer),
+        };
     }
 
     fn opt_with_record(&mut self, buffer: &mut R) -> Record {

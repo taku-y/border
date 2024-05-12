@@ -628,6 +628,7 @@ mod tch_dqn_config {
                 device: self.device,
                 critic_loss: self.critic_loss,
                 record_verbose_level: self.record_verbose_level,
+                autocast: self.autocast,
                 phantom: PhantomData,
             }
         }
