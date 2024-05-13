@@ -247,6 +247,10 @@ where
         let qnet = DqnModel::build(config.model_config, device);
         let qnet_tgt = qnet.clone();
 
+        if let Some(num_tch_threads) = config.num_tch_threads {
+            tch::set_num_threads(num_tch_threads as i32);
+        }
+
         Dqn {
             qnet,
             qnet_tgt,

@@ -46,6 +46,8 @@ where
     pub record_verbose_level: usize,
     #[serde(default)]
     pub autocast: bool,
+    #[serde(default)]
+    pub num_tch_threads: Option<usize>,
     pub phantom: PhantomData<Q>,
 }
 
@@ -71,6 +73,7 @@ where
             critic_loss: self.critic_loss.clone(),
             record_verbose_level: self.record_verbose_level,
             autocast: self.autocast,
+            num_tch_threads: self.num_tch_threads,
             phantom: PhantomData,
         }
     }
@@ -101,6 +104,7 @@ where
             critic_loss: CriticLoss::Mse,
             record_verbose_level: 0,
             autocast: false,
+            num_tch_threads: None,
             phantom: PhantomData,
         }
     }
@@ -205,6 +209,12 @@ where
     /// Sets whether to use autocast.
     pub fn autocast(mut self, v: bool) -> Self {
         self.autocast = v;
+        self
+    }
+
+    /// Sets the number of threads for tch.
+    pub fn num_tch_threads(mut self, v: usize) -> Self {
+        self.num_tch_threads = Some(v);
         self
     }
 

@@ -629,6 +629,7 @@ mod tch_dqn_config {
                 critic_loss: self.critic_loss,
                 record_verbose_level: self.record_verbose_level,
                 autocast: self.autocast,
+                num_tch_threads: None,
                 phantom: PhantomData,
             }
         }

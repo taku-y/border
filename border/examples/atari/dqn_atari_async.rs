@@ -328,6 +328,7 @@ fn train(matches: ArgMatches) -> Result<()> {
                 .clone()
                 .device(tch::Device::Cpu)
                 .explorer(explorer)
+                .num_tch_threads(1)
         })
         .collect::<Vec<_>>();
     let env_config_eval = config::env_config(name).eval();
@@ -378,8 +379,9 @@ fn create_config(matches: ArgMatches) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    tch::set_num_threads(1);
     let matches = utils::create_matches();
+    let n_actors = matches.value_of("n-actors").unwrap().parse::<usize>()?;
+    tch::set_num_threads((num_cpus::get() - n_actors) as _);
 
     if matches.is_present("create-config") {
         create_config(matches)?;
