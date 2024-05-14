@@ -381,7 +381,7 @@ fn create_config(matches: ArgMatches) -> Result<()> {
 fn main() -> Result<()> {
     let matches = utils::create_matches();
     let n_actors = matches.value_of("n-actors").unwrap().parse::<usize>()?;
-    tch::set_num_threads((num_cpus::get() - n_actors) as _);
+    tch::set_num_threads((num_cpus::get_physical() - n_actors) as _);
 
     if matches.is_present("create-config") {
         create_config(matches)?;
