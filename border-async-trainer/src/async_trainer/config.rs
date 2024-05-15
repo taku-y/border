@@ -32,6 +32,10 @@ pub struct AsyncTrainerConfig {
 
     /// Warmup period, for filling replay buffer, in environment steps
     pub warmup_period: usize,
+
+    /// Used for logging.
+    #[serde(default)]
+    pub n_actors: Option<usize>,
 }
 
 impl AsyncTrainerConfig {
@@ -53,6 +57,12 @@ impl AsyncTrainerConfig {
     /// Sets the directory the trained model being saved.
     pub fn model_dir<T: Into<String>>(mut self, model_dir: T) -> Result<Self> {
         self.model_dir = Some(model_dir.into());
+        Ok(self)
+    }
+
+    /// Sets the number of actors.
+    pub fn n_actors(mut self, n_actors: usize) -> Result<Self> {
+        self.n_actors = Some(n_actors);
         Ok(self)
     }
 }

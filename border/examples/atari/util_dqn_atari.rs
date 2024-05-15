@@ -296,6 +296,7 @@ mod async_trainer_config {
                 save_interval: self.save_interval,
                 sync_interval: self.sync_interval,
                 warmup_period: self.warmup_period,
+                n_actors: None,
             }
         }
     }

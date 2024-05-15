@@ -168,39 +168,13 @@ where
         Self::save_model(agent, model_dir);
     }
 
-    /// Returns optimization steps per second, then reset the internal counter.
-    fn opt_steps_per_sec(&mut self) -> f32 {
-        let osps = 1000. * self.opt_steps_for_ops as f32 / (self.timer_for_ops.as_millis() as f32);
+    /// Returns mean time for optimization step in ms, then reset the internal counter.
+    fn mean_time_for_opt_step(&mut self) -> f32 {
+        let osps = (self.timer_for_ops.as_millis() as f32) / (self.opt_steps_for_ops as f32);
         self.opt_steps_for_ops = 0;
         self.timer_for_ops = Duration::new(0, 0);
         osps
     }
-
-    // /// Record.
-    // #[inline]
-    // fn record(
-    //     &mut self,
-    //     record: &mut Record,
-    //     opt_steps_: &mut usize,
-    //     samples: &mut usize,
-    //     time: &mut SystemTime,
-    //     samples_total: usize,
-    // ) {
-    //     let duration = time.elapsed().unwrap().as_secs_f32();
-    //     let ops = (*opt_steps_ as f32) / duration;
-    //     let sps = (*samples as f32) / duration;
-    //     let spo = (*samples as f32) / (*opt_steps_ as f32);
-    //     record.insert("samples_total", Scalar(samples_total as _));
-    //     record.insert("opt_steps_per_sec", Scalar(ops));
-    //     record.insert("samples_per_sec", Scalar(sps));
-    //     record.insert("samples_per_opt_steps", Scalar(spo));
-    //     // info!("Collected samples per optimization step = {}", spo);
-
-    //     // Reset counter
-    //     *opt_steps_ = 0;
-    //     *samples = 0;
-    //     *time = SystemTime::now();
-    // }
 
     #[inline]
     fn train_step(&mut self, agent: &mut A, buffer: &mut R) -> Record {
@@ -294,8 +268,10 @@ where
 
             // Add stats wrt computation cost
             if opt_steps % self.record_compute_cost_interval == 0 {
-                // record.insert("fps", Scalar(sampler.fps()));
-                record.insert("opt_steps_per_sec", Scalar(self.opt_steps_per_sec()));
+                record.insert(
+                    "mean_time_for_opt_step",
+                    Scalar(self.mean_time_for_opt_step()),
+                );
             }
 
             // Evaluation

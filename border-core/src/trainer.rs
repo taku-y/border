@@ -181,9 +181,9 @@ where
         Self::save_model(agent, model_dir);
     }
 
-    /// Returns optimization steps per second, then reset the internal counter.
-    fn opt_steps_per_sec(&mut self) -> f32 {
-        let osps = 1000. * self.opt_steps_for_ops as f32 / (self.timer_for_ops.as_millis() as f32);
+    /// Returns mean time for optimization step in ms, then reset the internal counter.
+    fn mean_time_for_opt_step(&mut self) -> f32 {
+        let osps = (self.timer_for_ops.as_millis() as f32) / (self.opt_steps_for_ops as f32);
         self.opt_steps_for_ops = 0;
         self.timer_for_ops = Duration::new(0, 0);
         osps
@@ -273,7 +273,10 @@ where
                 // Add stats wrt computation cost
                 if opt_steps % self.record_compute_cost_interval == 0 {
                     record.insert("fps", Scalar(sampler.fps()));
-                    record.insert("opt_steps_per_sec", Scalar(self.opt_steps_per_sec()));
+                    record.insert(
+                        "mean_time_for_opt_step",
+                        Scalar(self.mean_time_for_opt_step()),
+                    );
                 }
 
                 // Evaluation
