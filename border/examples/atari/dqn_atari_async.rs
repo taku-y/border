@@ -107,13 +107,13 @@ mod config {
 
     pub fn load_async_trainer_config<'a>(
         model_dir: impl Into<&'a str>,
-    ) -> Result<AsyncTrainerConfig> {
+    ) -> Result<DqnAtariAsyncTrainerConfig> {
         let config_path = format!("{}/trainer.yaml", model_dir.into());
         let file = std::fs::File::open(config_path.clone())?;
         let rdr = std::io::BufReader::new(file);
         let config: DqnAtariAsyncTrainerConfig = serde_yaml::from_reader(rdr)?;
         println!("Load async trainer config: {}", config_path);
-        Ok(config.into())
+        Ok(config)
     }
 
     pub fn load_replay_buffer_config<'a>(
@@ -159,7 +159,7 @@ mod config {
 
     #[derive(Serialize)]
     pub struct DqnAtariAsyncConfig {
-        pub trainer: AsyncTrainerConfig,
+        pub trainer: DqnAtariAsyncTrainerConfig,
         pub replay_buffer: SimpleReplayBufferConfig,
         pub agent: DqnConfig<Cnn>,
     }
@@ -335,15 +335,16 @@ fn train(matches: ArgMatches) -> Result<()> {
     let replay_buffer_config = config::load_replay_buffer_config(model_dir.as_str())?;
     let step_proc_config = SimpleStepProcessorConfig::default();
     let actor_man_config = ActorManagerConfig::default();
-    let async_trainer_config =
-        config::load_async_trainer_config(model_dir.as_str())?.model_dir(model_dir.as_str())?;
+    let async_trainer_config = config::load_async_trainer_config(model_dir.as_str())?
+        .model_dir(model_dir.as_str())?
+        .n_actors(n_actors)?;
 
     if matches.is_present("show-config") {
         config::show_config(
             &env_config_train,
             &agent_config,
             &actor_man_config,
-            &async_trainer_config,
+            &async_trainer_config.into(),
         );
     } else {
         let config = config::DqnAtariAsyncConfig {
@@ -362,7 +363,7 @@ fn train(matches: ArgMatches) -> Result<()> {
             &step_proc_config,
             &replay_buffer_config,
             &actor_man_config,
-            &async_trainer_config,
+            &async_trainer_config.into(),
             &mut recorder,
             &mut evaluator,
         );

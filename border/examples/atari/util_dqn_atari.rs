@@ -164,10 +164,11 @@ mod trainer_config {
 
 #[cfg(feature = "border-async-trainer")]
 mod async_trainer_config {
+    use anyhow::Result;
     use border_async_trainer::AsyncTrainerConfig;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Clone, Deserialize, Serialize)]
     pub struct DqnAtariAsyncTrainerConfig {
         pub model_dir: Option<String>,
 
@@ -212,6 +213,10 @@ mod async_trainer_config {
             skip_serializing_if = "is_default_warmup_period"
         )]
         pub warmup_period: usize,
+
+        #[serde(default)]
+        /// Used for logging
+        pub n_actors: Option<usize>,
     }
 
     impl Default for DqnAtariAsyncTrainerConfig {
@@ -225,6 +230,7 @@ mod async_trainer_config {
                 sync_interval: 1,
                 save_interval: 500000,
                 warmup_period: 10000,
+                n_actors: None,
             }
         }
     }
@@ -283,6 +289,20 @@ mod async_trainer_config {
 
     fn is_default_warmup_period(v: &usize) -> bool {
         *v == default_warmup_period()
+    }
+
+    impl DqnAtariAsyncTrainerConfig {
+        /// Sets the directory the trained model being saved.
+        pub fn model_dir<T: Into<String>>(mut self, model_dir: T) -> Result<Self> {
+            self.model_dir = Some(model_dir.into());
+            Ok(self)
+        }
+
+        /// Sets the number of actors for logging.
+        pub fn n_actors(mut self, n_actors: usize) -> Result<Self> {
+            self.n_actors = Some(n_actors);
+            Ok(self)
+        }
     }
 
     impl Into<AsyncTrainerConfig> for DqnAtariAsyncTrainerConfig {
