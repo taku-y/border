@@ -114,12 +114,16 @@ mod agent {
             .n_nets(1)
     }
 
-    pub fn create_agent_config(in_dim: i64, out_dim: i64) -> Result<SacConfig<Mlp, Mlp2>> {
+    pub fn create_agent_config(
+        in_dim: i64,
+        out_dim: i64,
+        batch_size: usize,
+    ) -> Result<SacConfig<Mlp, Mlp2>> {
         let device = Device::cuda_if_available(0)?;
         let actor_config = create_actor_config(in_dim, out_dim);
         let critic_config = create_critic_config(in_dim, out_dim);
         let sac_config = SacConfig::default()
-            .batch_size(BATCH_SIZE)
+            .batch_size(batch_size)
             .actor_config(actor_config)
             .critic_config(critic_config)
             .device(device);
@@ -164,9 +168,16 @@ pub struct SacPendulumConfig {
 }
 
 impl SacPendulumConfig {
-    pub fn new(in_dim: i64, out_dim: i64, max_opts: usize, eval_interval: usize) -> Result<Self> {
+    pub fn new(
+        in_dim: i64,
+        out_dim: i64,
+        max_opts: usize,
+        eval_interval: usize,
+        warmup_period: usize,
+        batch_size: usize,
+    ) -> Result<Self> {
         let env_config = create_env_config(false)?;
-        let agent_config = create_agent_config(in_dim, out_dim)?;
+        let agent_config = create_agent_config(in_dim, out_dim, batch_size)?;
         let trainer_config = TrainerConfig::default()
             .max_opts(max_opts)
             .opt_interval(OPT_INTERVAL)
@@ -175,7 +186,7 @@ impl SacPendulumConfig {
             .record_compute_cost_interval(EVAL_INTERVAL)
             .flush_record_interval(EVAL_INTERVAL)
             .save_interval(EVAL_INTERVAL)
-            .warmup_period(WARMUP_PERIOD);
+            .warmup_period(warmup_period);
         let config = Self {
             env_config,
             agent_config,
@@ -186,8 +197,22 @@ impl SacPendulumConfig {
     }
 }
 
-fn train(args: &Args, max_opts: usize, model_dir: &str, eval_interval: usize) -> Result<()> {
-    let config = SacPendulumConfig::new(DIM_OBS, DIM_ACT, max_opts, eval_interval)?;
+fn train(
+    args: &Args,
+    max_opts: usize,
+    model_dir: &str,
+    eval_interval: usize,
+    warmup_period: usize,
+    batch_size: usize,
+) -> Result<()> {
+    let config = SacPendulumConfig::new(
+        DIM_OBS,
+        DIM_ACT,
+        max_opts,
+        eval_interval,
+        warmup_period,
+        batch_size,
+    )?;
     let step_proc_config = SimpleStepProcessorConfig {};
     let replay_buffer_config = GenericReplayBufferConfig::default().capacity(REPLAY_BUFFER_CAPACITY);
     let mut recorder = create_recorder(&args, model_dir, Some(&config))?;
@@ -214,7 +239,7 @@ fn train(args: &Args, max_opts: usize, model_dir: &str, eval_interval: usize) ->
 fn eval(args: &Args, model_dir: &str, render: bool) -> Result<()> {
     let env_config = create_env_config(render)?;
     let mut agent: Box<dyn Agent<_, ReplayBuffer>> = {
-        let agent_config = create_agent_config(DIM_OBS, DIM_ACT)?;
+        let agent_config = create_agent_config(DIM_OBS, DIM_ACT, BATCH_SIZE)?;
         let mut agent = Box::new(Sac::build(agent_config)) as _;
         let recorder = create_recorder(&args, model_dir, None)?;
         recorder.load_model("best".as_ref(), &mut agent)?;
@@ -232,11 +257,25 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     if args.train {
-        train(&args, MAX_OPTS, MODEL_DIR, EVAL_INTERVAL)?;
+        train(
+            &args,
+            MAX_OPTS,
+            MODEL_DIR,
+            EVAL_INTERVAL,
+            WARMUP_PERIOD,
+            BATCH_SIZE,
+        )?;
     } else if args.eval {
         eval(&args, MODEL_DIR, true)?;
     } else {
-        train(&args, MAX_OPTS, MODEL_DIR, EVAL_INTERVAL)?;
+        train(
+            &args,
+            MAX_OPTS,
+            MODEL_DIR,
+            EVAL_INTERVAL,
+            WARMUP_PERIOD,
+            BATCH_SIZE,
+        )?;
         eval(&args, MODEL_DIR, true)?;
     }
 
@@ -260,7 +299,9 @@ mod test {
             eval: false,
             mlflow: false,
         };
-        train(&args, 100, model_dir, 100)?;
+        // Use a short warmup and small batch size since this test only checks
+        // that training/eval run end-to-end, not that the agent learns well.
+        train(&args, 100, model_dir, 100, 10, 8)?;
         eval(&args, model_dir, false)?;
         Ok(())
     }
