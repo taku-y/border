@@ -2,6 +2,8 @@
 mod batch;
 #[cfg(feature = "candle")]
 pub mod candle;
+#[cfg(feature = "tch")]
+pub mod tch;
 mod config;
 mod iw_scheduler;
 mod replay_buffer;

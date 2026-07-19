@@ -12,6 +12,7 @@ readme = "README.md"
 [dependencies]
 border-core = { version = "0.0.9", path = "../border-core" }
 candle-core = { workspace = true, optional = true }
+tch = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true }
 anyhow = { workspace = true }
@@ -24,3 +25,4 @@ tempdir = { workspace = true }
 
 [features]
 candle = ["candle-core"]
+tch = ["dep:tch"]
