@@ -38,4 +38,4 @@ path = "examples/replay_antmaze.rs"
 test = false
 
 [features]
-candle = [ "candle-core" ]
+candle = [ "candle-core", "border-generic-replay-buffer/candle" ]

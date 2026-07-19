@@ -145,7 +145,7 @@ impl MinariConverter for PointMazeConverter {
                 let batch_size = obs.0.shape()[0];
                 debug_assert_eq!(obs.0.shape(), &[batch_size, 4]);
 
-                Ok(PointMazeObsBatch::from(arrayd_to_tensor(obs.0, None)?))
+                Ok(PointMazeObsBatch::from_tensor(arrayd_to_tensor(obs.0, None)?))
             }
             true => {
                 todo!();
@@ -185,7 +185,7 @@ impl MinariConverter for PointMazeConverter {
                 let batch_size = obs.0.shape()[0];
                 debug_assert_eq!(obs.0.shape(), &[batch_size, 4]);
 
-                Ok(PointMazeObsBatch::from(arrayd_to_tensor(obs.0, None)?))
+                Ok(PointMazeObsBatch::from_tensor(arrayd_to_tensor(obs.0, None)?))
             }
             true => {
                 todo!();
@@ -216,7 +216,7 @@ impl MinariConverter for PointMazeConverter {
     }
 
     fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
-        Ok(PointMazeActBatch::from({
+        Ok(PointMazeActBatch::from_tensor({
             let arr = pyobj_to_arrayd::<f32, f32>(obj.clone().unbind());
             arrayd_to_tensor(arr, None)?
         }))

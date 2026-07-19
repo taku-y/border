@@ -109,7 +109,7 @@ impl MinariConverter for PenConverter {
         let batch_size = obs.0.shape()[0];
         debug_assert_eq!(obs.0.shape(), &[batch_size, 45]);
 
-        Ok(PenObsBatch::from(arrayd_to_tensor(obs.0, None)?))
+        Ok(PenObsBatch::from_tensor(arrayd_to_tensor(obs.0, None)?))
     }
 
     fn convert_observation_batch_next(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
@@ -120,11 +120,11 @@ impl MinariConverter for PenConverter {
         let batch_size = obs.0.shape()[0];
         debug_assert_eq!(obs.0.shape(), &[batch_size, 45]);
 
-        Ok(PenObsBatch::from(arrayd_to_tensor(obs.0, None)?))
+        Ok(PenObsBatch::from_tensor(arrayd_to_tensor(obs.0, None)?))
     }
 
     fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
-        Ok(PenActBatch::from({
+        Ok(PenActBatch::from_tensor({
             let arr = pyobj_to_arrayd::<f32, f32>(obj.clone().unbind());
             arrayd_to_tensor(arr, None)?
         }))
