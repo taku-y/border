@@ -1,6 +1,12 @@
+#!/usr/bin/env bash
+# Stop immediately if any test command fails.
+set -e
+
 # crates
 cargo test -p border-core
+cargo test -p border-generic-replay-buffer --features candle,tch
 cargo test -p border-py-gym-env
+cargo test -p border-py-gym-env --features candle
 cargo test -p border-py-gym-env --features tch
 cargo test -p border-async-trainer
 cargo test -p border-atari-env
