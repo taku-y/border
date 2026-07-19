@@ -7,7 +7,7 @@ use crate::{
 use anyhow::Result;
 use candle_core::Tensor;
 use numpy::PyArrayDyn;
-use pyo3::{IntoPy, PyObject};
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
 pub use act::*;
@@ -109,7 +109,7 @@ mod converter {
         fn filt_obs(&mut self, obs: PyObject) -> Result<Self::Obs> {
             // ndarray
             let obs = pyo3::Python::with_gil(|py| {
-                if obs.as_ref(py).get_type().name().unwrap() == "NoneType" {
+                if obs.bind(py).is_none() {
                     panic!();
                 } else {
                     pyobj_to_arrayd::<f32, f32>(obs)
@@ -133,7 +133,7 @@ mod converter {
                     let arrayd = tensor_to_arrayd::<i64>(act.0, true)?;
                     let pyobj = pyo3::Python::with_gil(|py| {
                         let act = PyArrayDyn::<i64>::from_array(py, &arrayd);
-                        act.into_py(py)
+                        act.into_any().unbind()
                     });
                     Ok(pyobj)
                 }

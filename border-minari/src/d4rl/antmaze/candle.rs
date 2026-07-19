@@ -7,7 +7,7 @@ use anyhow::Result;
 use border_generic_replay_buffer::BatchBase;
 use candle_core::{DType, Device, Tensor};
 use ndarray::{ArrayBase, ArrayD, Axis, Slice};
-use pyo3::{types::PyIterator, PyAny, PyObject, Python};
+use pyo3::prelude::*;
 use std::convert::{TryFrom, TryInto};
 
 const DIM_OBS: usize = 27;
@@ -249,12 +249,12 @@ impl AntMazeConverter {
             let mut all_obs = Tensor::zeros(&[0, DIM_OBS], DType::F32, &Device::Cpu)?;
 
             // Collect all observations for calculating mean and std
-            for ep in PyIterator::from_object(py, &episodes)? {
+            for ep in episodes.bind(py).try_iter()? {
                 // ep is minari.dataset.episode_data.EpisodeData
                 let ep = ep?;
                 let obj = ep.getattr("observations")?;
 
-                let obs_batch = pyobj_to_tensor1(obj, "observation")?;
+                let obs_batch = pyobj_to_tensor1(&obj, "observation")?;
                 all_obs = Tensor::cat(&[all_obs, obs_batch], 0)?;
             }
 
@@ -280,7 +280,7 @@ impl MinariConverter for AntMazeConverter {
     type ObsBatch = AntMazeObsBatch;
     type ActBatch = AntMazeActBatch;
 
-    fn convert_observation(&self, obj: &PyAny) -> Result<Self::Obs> {
+    fn convert_observation(&self, obj: &Bound<'_, PyAny>) -> Result<Self::Obs> {
         let obj = obj.get_item("observation")?.extract()?;
         let obs = arrayd_to_tensor(pyobj_to_arrayd::<f64, f32>(obj), Some(&[1, DIM_OBS]))?;
         Ok(AntMazeObs {
@@ -292,7 +292,7 @@ impl MinariConverter for AntMazeConverter {
         Ok(arrayd_to_pyobj(tensor_to_arrayd(act.action)?))
     }
 
-    fn convert_observation_batch(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         let obs = pyobj_to_tensor1(obj, "observation")?;
         let obs = self.normalize_observation(&obs)?;
 
@@ -306,7 +306,7 @@ impl MinariConverter for AntMazeConverter {
         })
     }
 
-    fn convert_observation_batch_next(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch_next(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         let obs = pyobj_to_tensor2(obj, "observation")?;
         let obs = self.normalize_observation(&obs)?;
 
@@ -320,10 +320,10 @@ impl MinariConverter for AntMazeConverter {
         })
     }
 
-    fn convert_action_batch(&self, obj: &PyAny) -> Result<Self::ActBatch> {
+    fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
         Ok(AntMazeActBatch {
             action: {
-                let arr = pyobj_to_arrayd::<f32, f32>(obj.into());
+                let arr = pyobj_to_arrayd::<f32, f32>(obj.clone().unbind());
                 arrayd_to_tensor(arr, None)?
             },
         })
@@ -342,9 +342,9 @@ impl MinariConverter for AntMazeConverter {
 }
 
 /// Converts PyObject to [`candle_core::Tensor`] and drop the last row.
-fn pyobj_to_tensor1(obj: &PyAny, name: &str) -> Result<Tensor> {
+fn pyobj_to_tensor1(obj: &Bound<'_, PyAny>, name: &str) -> Result<Tensor> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
 
     // Drop the last row
     let arr = arr.slice_axis(Axis(0), Slice::from(..-1)).to_owned();
@@ -354,9 +354,9 @@ fn pyobj_to_tensor1(obj: &PyAny, name: &str) -> Result<Tensor> {
 }
 
 /// Converts PyObject to Tensor and drop the first row.
-fn pyobj_to_tensor2(obj: &PyAny, name: &str) -> Result<Tensor> {
+fn pyobj_to_tensor2(obj: &Bound<'_, PyAny>, name: &str) -> Result<Tensor> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
 
     // Drop the first row
     let arr = arr.slice_axis(Axis(0), Slice::from(1..)).to_owned();
@@ -384,6 +384,6 @@ fn tensor_to_arrayd(tensor: Tensor) -> Result<ArrayD<f32>> {
         .iter()
         .map(|&x| x as usize)
         .collect::<Vec<usize>>();
-    let arr = ArrayBase::from_vec(tensor.flatten_all()?.to_vec1()?).into_shape(shape)?;
+    let arr = ArrayBase::from_vec(tensor.flatten_all()?.to_vec1()?).into_shape_with_order(shape)?;
     Ok(arr)
 }

@@ -225,7 +225,7 @@ where
     };
     let v: Vec<T> = t.flatten_all()?.to_vec1()?;
 
-    Ok(ndarray::Array1::<T>::from(v).into_shape(ndarray::IxDyn(&shape))?)
+    Ok(ndarray::Array1::<T>::from(v).into_shape_with_order(ndarray::IxDyn(&shape))?)
 }
 
 /// Returns gamma values multipied by done flag values.

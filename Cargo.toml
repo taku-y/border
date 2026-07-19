@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "border-core",
     "border-generic-replay-buffer",
@@ -17,7 +18,7 @@ exclude = ["docker/", "examples/"]
 
 [workspace.package]
 version = "0.0.9"
-edition = "2018"
+edition = "2021"
 rust-version = "1.88"
 description = "Reinforcement learning library"
 repository = "https://github.com/laboroai/border"
@@ -30,7 +31,7 @@ readme = "README.md"
 clap = { version = "4.5.8", features = ["derive"] }
 csv = "1.1.5"
 fastrand = "1.4.0"
-tch = "0.16.0"
+tch = "0.24.0"
 anyhow = "1.0.38"
 crossbeam-channel = "0.5.1"
 serde_yaml = "0.8.7"
@@ -40,13 +41,13 @@ dirs = "3.0.2"
 thiserror = "1.0"
 serde = "1.0.194"
 serde_json = "^1.0.114"
-numpy = "0.14.1"
+numpy = "0.25"
 env_logger = "0.8.2"
 tempdir = "0.3.7"
 num-traits = "0.2.14"
 tensorboard-rs = "0.2.4"
-pyo3 = { version = "=0.14.5", default-features = false }
-ndarray = "0.15.1"
+pyo3 = { version = "0.25", default-features = false }
+ndarray = "0.16"
 chrono = "0.4"
 segment-tree = "2.0.0"
 image = "0.23.14"

@@ -11,10 +11,8 @@ use border_core::{
     record::{Record, RecordValue::Scalar},
     Env, Step,
 };
-use pyo3::{
-    types::{IntoPyDict, PyTuple},
-    PyObject, Python,
-};
+use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyTuple};
 
 /// Environment interface for Minari datasets.
 pub struct MinariEnv<T: MinariConverter> {
@@ -38,25 +36,25 @@ impl<T: MinariConverter> Env for MinariEnv<T> {
         pyo3::Python::with_gil(|py| {
             let ret_values = if let Some(seed) = self.initial_seed {
                 self.initial_seed = None;
-                let kwargs = Some(vec![("seed", seed)].into_py_dict(py));
-                self.env.call_method(py, "reset", (), kwargs)?
+                let kwargs = Some(vec![("seed", seed)].into_py_dict(py)?);
+                self.env.call_method(py, "reset", (), kwargs.as_ref())?
             } else {
                 self.env.call_method0(py, "reset")?
             };
-            let ret_values_: &PyTuple = ret_values.extract(py)?;
+            let ret_values_ = ret_values.bind(py).downcast::<PyTuple>().unwrap();
             self.converter
-                .convert_observation(ret_values_.get_item(0).extract()?)
+                .convert_observation(&ret_values_.get_item(0)?)
         })
     }
 
     fn step(&mut self, act: &Self::Act) -> (Step<Self>, Record) {
-        fn is_done(step: &PyTuple) -> (i8, i8) {
+        fn is_done(step: &Bound<'_, PyTuple>) -> (i8, i8) {
             // terminated or truncated
-            let is_terminated = match step.get_item(2).extract().unwrap() {
+            let is_terminated = match step.get_item(2).unwrap().extract().unwrap() {
                 true => 1,
                 false => 0,
             };
-            let is_truncated = match step.get_item(3).extract().unwrap() {
+            let is_truncated = match step.get_item(3).unwrap().extract().unwrap() {
                 true => 1,
                 false => 0,
             };
@@ -78,12 +76,12 @@ impl<T: MinariConverter> Env for MinariEnv<T> {
             ) = {
                 let a_py = self.converter.convert_action(act.clone()).unwrap();
                 let ret = self.env.call_method(py, "step", (a_py,), None).unwrap();
-                let step: &PyTuple = ret.extract(py).unwrap();
+                let step = ret.bind(py).downcast::<PyTuple>().unwrap();
                 let next_obs = self
                     .converter
-                    .convert_observation(step.get_item(0))
+                    .convert_observation(&step.get_item(0).unwrap())
                     .unwrap();
-                let reward: Vec<f32> = vec![step.get_item(1).extract().unwrap()];
+                let reward: Vec<f32> = vec![step.get_item(1).unwrap().extract().unwrap()];
                 let (is_terminated, is_truncated) = is_done(step);
                 let is_terminated = vec![is_terminated];
                 let is_truncated = vec![is_truncated];

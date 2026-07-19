@@ -122,6 +122,6 @@ where
     let v = Vec::<T>::try_from(&t.flatten(0, -1)).expect("Failed to convert from Tensor to Vec");
 
     ndarray::Array1::<T>::from(v)
-        .into_shape(ndarray::IxDyn(&shape))
+        .into_shape_with_order(ndarray::IxDyn(&shape))
         .unwrap()
 }

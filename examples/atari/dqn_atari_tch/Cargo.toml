@@ -1,7 +1,7 @@
 [package]
 name = "dqn_atari_tch"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 rust-version = "1.85"
 
 [dependencies]
@@ -9,8 +9,8 @@ log = "0.4"
 anyhow = "1.0.38"
 clap = { version = "4.5.8", features = ["derive"] }
 env_logger = "0.8.2"
-numpy = "0.14.1"
-tch = { version = "0.16.1" }
+numpy = "0.25"
+tch = { version = "0.24.0" }
 border-tch-agent = { version = "0.0.9", path = "../../../border-tch-agent" }
 border-core = { version = "0.0.9", path = "../../../border-core" }
 border-generic-replay-buffer = { version = "0.0.9", path = "../../../border-generic-replay-buffer" }

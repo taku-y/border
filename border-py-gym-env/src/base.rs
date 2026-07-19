@@ -6,9 +6,9 @@ use border_core::{
     Env, Info, Step,
 };
 use log::{info, trace};
-// use pyo3::IntoPy;
-use pyo3::types::{IntoPyDict, PyTuple};
-use pyo3::{types::PyModule, PyObject, Python, ToPyObject};
+use pyo3::ffi::c_str;
+use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyModule, PyTuple};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Debug, time::Duration};
 
@@ -183,13 +183,13 @@ where
     // }
 
     /// Returns `is_terminated` and `is_truncated`, extracted from `Step` object in Python.
-    fn is_done(step: &PyTuple) -> Result<(i8, i8)> {
+    fn is_done(step: &Bound<'_, PyTuple>) -> Result<(i8, i8)> {
         // terminated or truncated
-        let is_terminated = match step.get_item(2).extract()? {
+        let is_terminated = match step.get_item(2)?.extract()? {
             true => 1,
             false => 0,
         };
-        let is_truncated = match step.get_item(3).extract()? {
+        let is_truncated = match step.get_item(3)?.extract()? {
             true => 1,
             false => 0,
         };
@@ -223,19 +223,28 @@ where
                     self.initial_seed = None;
                     let kwargs = match self.pybullet {
                         true => None,
-                        false => Some(vec![("seed", seed)].into_py_dict(py)),
+                        false => Some(vec![("seed", seed)].into_py_dict(py)?),
                     };
-                    self.env.call_method(py, "reset", (), kwargs)?
+                    self.env.call_method(py, "reset", (), kwargs.as_ref())?
                 } else {
                     self.env.call_method0(py, "reset")?
                 };
-                let ret_values_: &PyTuple = ret_values.extract(py).unwrap();
-                ret_values_.get_item(0).extract().unwrap()
+                let ret_values_ = ret_values.bind(py).downcast::<PyTuple>().unwrap();
+                ret_values_.get_item(0)?.extract().unwrap()
             };
 
             if self.pybullet && self.render {
-                let floor: &PyModule = self.pybullet_state.as_ref().unwrap().extract(py).unwrap();
-                floor.getattr("add_floor")?.call1((&self.env,)).unwrap();
+                let floor = self
+                    .pybullet_state
+                    .as_ref()
+                    .unwrap()
+                    .bind(py)
+                    .downcast::<PyModule>()
+                    .unwrap();
+                floor
+                    .getattr("add_floor")?
+                    .call1((self.env.bind(py),))
+                    .unwrap();
             }
             // Reset the state
             Ok(self.converter.reset(obs)?)
@@ -273,10 +282,16 @@ where
                 if !self.pybullet {
                     let _ = self.env.call_method0(py, "render");
                 } else {
-                    let cam: &PyModule = self.pybullet_state.as_ref().unwrap().extract(py).unwrap();
+                    let cam = self
+                        .pybullet_state
+                        .as_ref()
+                        .unwrap()
+                        .bind(py)
+                        .downcast::<PyModule>()
+                        .unwrap();
                     cam.getattr("update_camera_pos")
                         .unwrap()
-                        .call1((&self.env,))
+                        .call1((self.env.bind(py),))
                         .unwrap();
                 }
                 std::thread::sleep(self.wait);
@@ -287,17 +302,16 @@ where
                 let a_py = self.converter.filt_act(act.clone()).unwrap();
                 self.env.call_method(py, "step", (a_py,), None).unwrap()
             };
-            let step: &PyTuple = step_py.extract(py).unwrap();
+            let step = step_py.bind(py).downcast::<PyTuple>().unwrap();
 
             // Observation at the next step
             let obs = {
-                let obs_py = step.get_item(0).to_owned();
-                self.converter.filt_obs(obs_py.to_object(py)).unwrap()
-                // self.converter.filt_obs(obs_py.into()).unwrap()
+                let obs_py = step.get_item(0).unwrap();
+                self.converter.filt_obs(obs_py.unbind()).unwrap()
             };
 
             // Reward
-            let reward: Vec<f32> = vec![step.get_item(1).extract().unwrap()];
+            let reward: Vec<f32> = vec![step.get_item(1).unwrap().extract().unwrap()];
 
             // Terminated/Truncated flags
             let (is_terminated, mut is_truncated) = {
@@ -344,17 +358,15 @@ where
     /// * `seed` - The seed value of the random number generator.
     ///   This value will be used at the first call of the reset method.
     fn build(config: &Self::Config, seed: i64) -> Result<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
+        Python::with_gil(|py| {
         // sys.argv is used by pyglet library, which is responsible for rendering.
         // Depending on the python interpreter, however, sys.argv can be empty.
         // For that case, sys argv is set here.
         // See https://github.com/PyO3/pyo3/issues/1241#issuecomment-715952517
-        let locals = [("sys", py.import("sys")?)].into_py_dict(py);
-        let _ = py.eval("sys.argv.insert(0, 'PyGymEnv')", None, Some(&locals))?;
-        let path = py.eval("sys.path", None, Some(&locals)).unwrap();
-        let ver = py.eval("sys.version", None, Some(&locals)).unwrap();
+        let locals = [("sys", py.import("sys")?)].into_py_dict(py)?;
+        let _ = py.eval(c_str!("sys.argv.insert(0, 'PyGymEnv')"), None, Some(&locals))?;
+        let path = py.eval(c_str!("sys.path"), None, Some(&locals)).unwrap();
+        let ver = py.eval(c_str!("sys.version"), None, Some(&locals)).unwrap();
         info!("Initialize PyGymEnv");
         info!("{}", path);
         info!("Python version = {}", ver);
@@ -371,18 +383,17 @@ where
             let render = config.render_mode.is_some();
             let env = {
                 let kwargs = if let Some(render_mode) = config.render_mode.clone() {
-                    Some(vec![("render_mode", render_mode)].into_py_dict(py))
+                    Some(vec![("render_mode", render_mode)].into_py_dict(py)?)
                 } else {
                     None
                 };
-                gym.getattr("make_f32")?.call((name,), kwargs)?
+                gym.getattr("make_f32")?.call((name,), kwargs.as_ref())?
             };
 
             (env, render)
         } else {
             let gym = py.import("f32_wrapper")?;
-            let kwargs = None;
-            let env = gym.getattr("make_f32")?.call((name,), kwargs)?;
+            let env = gym.getattr("make_f32")?.call1((name,))?;
             if config.render_mode.is_some() {
                 env.call_method("render", ("human",), None).unwrap();
                 (env, true)
@@ -401,10 +412,9 @@ where
         let pybullet_state = if !config.pybullet {
             None
         } else {
-            let pybullet_state = Python::with_gil(|py| {
-                PyModule::from_code(
+            let pybullet_state = PyModule::from_code(
                     py,
-                    r#"
+                    c_str!(r#"
 _torsoId = None
 _floor = False
 
@@ -449,18 +459,18 @@ def update_camera_pos(env):
         humanPos, humanOrn = p.getBasePositionAndOrientation(torsoId)
         p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
 
-            "#,
-                    "pybullet_state.py",
-                    "pybullet_state",
+            "#),
+                    c_str!("pybullet_state.py"),
+                    c_str!("pybullet_state"),
                 )
                 .unwrap()
-                .to_object(py)
-            });
+                .into_any()
+                .unbind();
             Some(pybullet_state)
         };
 
         Ok(GymEnv {
-            env: env.into(),
+            env: env.unbind(),
             converter: C::new(&config.converter_config)?,
             render,
             count_steps: 0,
@@ -469,6 +479,7 @@ def update_camera_pos(env):
             pybullet: config.pybullet,
             pybullet_state,
             initial_seed: Some(seed),
+        })
         })
     }
 }

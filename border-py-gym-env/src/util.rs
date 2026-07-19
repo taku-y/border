@@ -1,8 +1,8 @@
 //! Utility functions mainly for data conversion between Python and Rust.
 use ndarray::{concatenate, ArrayD, Axis};
 use num_traits::cast::AsPrimitive;
-use numpy::{Element, PyArrayDyn};
-use pyo3::{IntoPy, PyObject};
+use numpy::{Element, PyArrayDyn, PyArrayMethods};
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -19,7 +19,7 @@ where
     T2: 'static + Copy,
 {
     pyo3::Python::with_gil(|py| {
-        let obs: &PyArrayDyn<T1> = obs.extract(py).unwrap();
+        let obs = obs.bind(py).downcast::<PyArrayDyn<T1>>().unwrap();
         let obs = obs.to_owned_array();
         let obs = obs.mapv(|elem| elem.as_());
 
@@ -37,7 +37,7 @@ pub fn arrayd_to_pyobj(act: ArrayD<f32>) -> PyObject {
     // let act = act.remove_axis(ndarray::Axis(0));
     pyo3::Python::with_gil(|py| {
         let act = PyArrayDyn::<f32>::from_array(py, &act);
-        act.into_py(py)
+        act.into_any().unbind()
     })
 }
 

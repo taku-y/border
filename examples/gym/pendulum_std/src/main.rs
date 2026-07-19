@@ -4,7 +4,7 @@ use border_policy_no_backend::{Mat, Mlp};
 use border_py_gym_env::{util::pyobj_to_arrayd, GymEnv, GymEnvConfig, GymEnvConverter};
 use ndarray::ArrayD;
 use numpy::PyArrayDyn;
-use pyo3::{IntoPy, PyObject};
+use pyo3::prelude::*;
 use std::fs;
 
 mod obs_act_types {
@@ -79,7 +79,7 @@ mod obs_act_types {
         fn filt_obs(&mut self, obs: PyObject) -> Result<Self::Obs> {
             // ndarray
             let obs = pyo3::Python::with_gil(|py| {
-                if obs.as_ref(py).get_type().name().unwrap() == "NoneType" {
+                if obs.bind(py).is_none() {
                     panic!();
                 } else {
                     pyobj_to_arrayd::<f32, f32>(obs)
@@ -94,7 +94,7 @@ mod obs_act_types {
             let arrayd = act.into();
             let pyobj = pyo3::Python::with_gil(|py| {
                 let act = PyArrayDyn::<f32>::from_array(py, &arrayd);
-                act.into_py(py)
+                act.into_any().unbind()
             });
             Ok(pyobj)
         }

@@ -9,7 +9,7 @@ use crate::{
 use anyhow::Result;
 use candle_core::Tensor;
 use ndarray::{concatenate, ArrayD, Axis, IxDyn, Slice};
-use pyo3::{types::PyIterator, PyAny, PyObject, Python, ToPyObject};
+use pyo3::prelude::*;
 use std::convert::TryFrom;
 
 pub type PointMazeAct = NdarrayAct;
@@ -63,12 +63,12 @@ impl PointMazeConverter {
             let mut all_obs = ArrayD::<f32>::zeros(IxDyn(&[0, 4]));
 
             // Collect all observations for calculating mean and std
-            for ep in PyIterator::from_object(py, &episodes)? {
+            for ep in episodes.bind(py).try_iter()? {
                 // ep is minari.dataset.episode_data.EpisodeData
                 let ep = ep?;
                 let obj = ep.getattr("observations")?;
 
-                let obs_batch = pyobj_to_ndarray1(obj, "observation")?;
+                let obs_batch = pyobj_to_ndarray1(&obj, "observation")?;
                 all_obs = concatenate![Axis(0), all_obs, obs_batch];
             }
 
@@ -99,7 +99,7 @@ impl MinariConverter for PointMazeConverter {
     type ObsBatch = PointMazeObsBatch;
     type ActBatch = PointMazeActBatch;
 
-    fn convert_observation(&self, obj: &PyAny) -> Result<Self::Obs> {
+    fn convert_observation(&self, obj: &Bound<'_, PyAny>) -> Result<Self::Obs> {
         match self.include_goal {
             false => {
                 let obs = obj.get_item("observation")?.extract()?;
@@ -135,7 +135,7 @@ impl MinariConverter for PointMazeConverter {
         Ok(act2)
     }
 
-    fn convert_observation_batch(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         match self.include_goal {
             false => {
                 let obs = pyobj_to_ndarray1(obj, "observation")?;
@@ -175,7 +175,7 @@ impl MinariConverter for PointMazeConverter {
         }
     }
 
-    fn convert_observation_batch_next(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch_next(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         match self.include_goal {
             false => {
                 let obs = pyobj_to_ndarray2(obj, "observation")?;
@@ -215,9 +215,9 @@ impl MinariConverter for PointMazeConverter {
         }
     }
 
-    fn convert_action_batch(&self, obj: &PyAny) -> Result<Self::ActBatch> {
+    fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
         Ok(PointMazeActBatch::from({
-            let arr = pyobj_to_arrayd::<f32, f32>(obj.into());
+            let arr = pyobj_to_arrayd::<f32, f32>(obj.clone().unbind());
             arrayd_to_tensor(arr, None)?
         }))
     }
@@ -225,7 +225,7 @@ impl MinariConverter for PointMazeConverter {
     fn env_params(&self, py: Python<'_>) -> Vec<(&str, PyObject)> {
         // not override the original parameters in Minari
         // https://github.com/Farama-Foundation/minari-dataset-generation-scripts/blob/cc54b71147650b310f5a84c642dd6dc127f333a1/scripts/pointmaze/create_pointmaze_dataset.py#L157-L159
-        vec![("max_episode_steps", 300.to_object(py))]
+        vec![("max_episode_steps", 300i64.into_pyobject(py).unwrap().into_any().unbind())]
 
         // When want to override the parameters, comment in the following code:
         // vec![
@@ -236,18 +236,18 @@ impl MinariConverter for PointMazeConverter {
 }
 
 /// Converts PyObject to `NdArray` and drop the last row.
-fn pyobj_to_ndarray1(obj: &PyAny, name: &str) -> Result<ArrayD<f32>> {
+fn pyobj_to_ndarray1(obj: &Bound<'_, PyAny>, name: &str) -> Result<ArrayD<f32>> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
 
     // Drop the last row
     Ok(arr.slice_axis(Axis(0), Slice::from(..-1)).to_owned())
 }
 
 /// Converts PyObject to `NdArray` and drop the first row.
-fn pyobj_to_ndarray2(obj: &PyAny, name: &str) -> Result<ArrayD<f32>> {
+fn pyobj_to_ndarray2(obj: &Bound<'_, PyAny>, name: &str) -> Result<ArrayD<f32>> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
 
     // Drop the last row
     Ok(arr.slice_axis(Axis(0), Slice::from(1..)).to_owned())

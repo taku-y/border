@@ -3,7 +3,7 @@ use super::{NdarrayAct, NdarrayDictObs};
 use crate::{util::pyobj_to_arrayd, GymEnvConverter};
 use anyhow::Result;
 use numpy::PyArrayDyn;
-use pyo3::{IntoPy, PyObject};
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -61,14 +61,14 @@ impl GymEnvConverter for NdarrayDictObsConverter {
             NdarrayAct::Continuous(arrayd) => {
                 let pyobj = pyo3::Python::with_gil(|py| {
                     let act = PyArrayDyn::<f32>::from_array(py, &arrayd);
-                    act.into_py(py)
+                    act.into_any().unbind()
                 });
                 Ok(pyobj)
             }
             NdarrayAct::Discrete(arrayd) => {
                 let pyobj = pyo3::Python::with_gil(|py| {
                     let act = PyArrayDyn::<i64>::from_array(py, &arrayd);
-                    act.into_py(py)
+                    act.into_any().unbind()
                 });
                 Ok(pyobj)
             }
