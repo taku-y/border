@@ -11,6 +11,7 @@ cargo test -p border-py-gym-env --features tch
 cargo test -p border-async-trainer
 cargo test -p border-atari-env
 cargo test -p border-candle-agent
+cargo test -p border-minari --features candle
 cargo test -p border-tch-agent
 cargo test -p border-policy-no-backend --features=tch
 
