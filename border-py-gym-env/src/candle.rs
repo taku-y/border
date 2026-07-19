@@ -8,14 +8,13 @@ mod ndarray_dict_obs;
 mod ndarray_dict_obs_converter;
 mod ndarray_obs;
 pub mod tensor;
-mod tensor_batch;
 pub use ndarray_act::NdarrayAct;
 pub use ndarray_converter::{NdarrayConverter, NdarrayConverterConfig};
 pub use ndarray_dict_obs::NdarrayDictObs;
 pub use ndarray_dict_obs_converter::{NdarrayDictObsConverter, NdarrayDictObsConverterConfig};
 pub use ndarray_obs::NdarrayObs;
 use std::convert::TryFrom;
-pub use tensor_batch::{TensorBatch, ZeroTensor};
+pub use border_generic_replay_buffer::candle::{TensorBatch, ZeroTensor};
 
 fn arrayd_to_tensor<T1, T2>(a: ArrayD<T1>, add_batch_dim: bool) -> Result<Tensor>
 where

@@ -43,5 +43,5 @@ features = ["candle"]
 no-default-features = true
 
 [features]
-candle = [ "candle-core", "border-generic-replay-buffer" ]
-tch = ["dep:tch", "border-generic-replay-buffer"]
+candle = [ "candle-core", "border-generic-replay-buffer/candle" ]
+tch = ["dep:tch", "border-generic-replay-buffer/tch"]
