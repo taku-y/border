@@ -10,7 +10,8 @@
   This also bumps ndarray (0.15 -> 0.16) to match the version tch links against, which
   in turn requires numpy (0.14 -> 0.25) and pyo3 (0.14 -> 0.25). The pyo3 upgrade migrates
   all Python interop to the `Bound` API (`border-py-gym-env`, `border-minari`). The
-  workspace edition is bumped to 2021.
+  workspace edition is bumped to 2021. `border-atari-env` stays on ndarray 0.15 to
+  match the `gym-core` trait it implements (it exchanges no ndarray values with tch).
 
 ## v0.0.8 (2025-05-17)
 
