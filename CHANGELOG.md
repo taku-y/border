@@ -5,6 +5,11 @@
 ### Changed
 
 * Separate the generic replaybuffer into a separate crate (`border-generic-replay-buffer`).
+* Consolidate the duplicated `TensorBatch` implementations into `border-generic-replay-buffer`
+  behind the `candle` and `tch` features; the agent crates, `border-py-gym-env`, and
+  `border-minari` now re-export it. The candle variant switches to a single contiguous tensor
+  to match the tch variant, all consumers use `TensorBatch::from_tensor`, and the unused
+  `ZeroTensor` trait is removed (https://github.com/taku-y/border/issues/39).
 * Add NegLossEvaluator (`border-core`).
 * Bump the version of tch to 0.24.0, which requires libtorch v2.11.0 (`border-tch-agent`).
   This also bumps ndarray (0.15 -> 0.16) to match the version tch links against, which

@@ -35,7 +35,7 @@ mod obs {
 
     impl From<TensorObs> for TensorBatch {
         fn from(o: TensorObs) -> Self {
-            o.0.into()
+            TensorBatch::from_tensor(o.0)
         }
     }
 }
@@ -63,7 +63,7 @@ mod act {
 
     impl From<TensorAct> for TensorBatch {
         fn from(a: TensorAct) -> Self {
-            a.0.into()
+            TensorBatch::from_tensor(a.0)
         }
     }
 }

@@ -1,9 +1,8 @@
 mod ndarray_act;
 mod ndarray_obs;
-mod tensor_batch;
 pub use ndarray_act::NdarrayAct;
 pub use ndarray_obs::NdarrayObs;
-pub use tensor_batch::TensorBatch;
+pub use border_generic_replay_buffer::candle::TensorBatch;
 
 use anyhow::Result;
 use candle_core::{Tensor, WithDType};

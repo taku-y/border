@@ -1,3 +1,4 @@
+#![cfg(feature = "tch")]
 use border_policy_no_backend::Mat;
 use tch::Tensor;
 

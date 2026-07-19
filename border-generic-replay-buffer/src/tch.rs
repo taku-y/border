@@ -1,37 +1,5 @@
-use border_generic_replay_buffer::BatchBase;
-use tch::{Device, Tensor};
-
-/// Adds capability of constructing [`Tensor`] with a static method.
-///
-/// [`Tensor`]: https://docs.rs/tch/0.24.0/tch/struct.Tensor.html
-pub trait ZeroTensor {
-    /// Constructs zero tensor.
-    fn zeros(shape: &[i64]) -> Tensor;
-}
-
-impl ZeroTensor for u8 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, (tch::kind::Kind::Uint8, Device::Cpu))
-    }
-}
-
-impl ZeroTensor for i32 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, (tch::kind::Kind::Int, Device::Cpu))
-    }
-}
-
-impl ZeroTensor for f32 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, tch::kind::FLOAT_CPU)
-    }
-}
-
-impl ZeroTensor for i64 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, (tch::kind::Kind::Int64, Device::Cpu))
-    }
-}
+use crate::BatchBase;
+use ::tch::{Device, Tensor};
 
 /// A buffer consisting of a [`Tensor`].
 ///
@@ -72,11 +40,6 @@ impl TensorBatch {
 
 impl BatchBase for TensorBatch {
     fn new(capacity: usize) -> Self {
-        // let capacity = capacity as i64;
-        // let mut shape: Vec<_> = S::shape().to_vec().iter().map(|e| *e as i64).collect();
-        // shape.insert(0, capacity);
-        // let buf = D::zeros(shape.as_slice());
-
         Self {
             buf: None,
             capacity: capacity as _,
@@ -101,7 +64,7 @@ impl BatchBase for TensorBatch {
             let mut shape = data.buf.as_ref().unwrap().size().clone();
             shape[0] = self.capacity;
             let kind = data.buf.as_ref().unwrap().kind();
-            let device = tch::Device::Cpu;
+            let device = Device::Cpu;
             self.buf = Some(Tensor::zeros(&shape, (kind, device)));
         }
 
@@ -128,5 +91,70 @@ impl BatchBase for TensorBatch {
 impl From<TensorBatch> for Tensor {
     fn from(b: TensorBatch) -> Self {
         b.buf.unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::BatchBase;
+
+    fn col_tensor(vals: &[f32]) -> Tensor {
+        Tensor::from_slice(vals).reshape(&[vals.len() as i64, 1])
+    }
+
+    #[test]
+    fn from_tensor_and_into_roundtrip() {
+        let t = col_tensor(&[1.0, 2.0, 3.0, 4.0]);
+        let batch = TensorBatch::from_tensor(t.copy());
+        let back: Tensor = batch.into();
+        assert_eq!(Vec::<f32>::try_from(back.flatten(0, 1)).unwrap(), vec![1.0, 2.0, 3.0, 4.0]);
+    }
+
+    #[test]
+    fn push_then_sample() {
+        let mut buf = TensorBatch::new(4);
+        buf.push(0, TensorBatch::from_tensor(col_tensor(&[1.0, 2.0])));
+        buf.push(2, TensorBatch::from_tensor(col_tensor(&[3.0, 4.0])));
+
+        let sampled: Tensor = buf.sample(&vec![0, 1, 2, 3]).into();
+        assert_eq!(
+            Vec::<f32>::try_from(sampled.flatten(0, 1)).unwrap(),
+            vec![1.0, 2.0, 3.0, 4.0]
+        );
+
+        let sampled: Tensor = buf.sample(&vec![3, 0]).into();
+        assert_eq!(
+            Vec::<f32>::try_from(sampled.flatten(0, 1)).unwrap(),
+            vec![4.0, 1.0]
+        );
+    }
+
+    #[test]
+    fn push_wraps_around() {
+        let mut buf = TensorBatch::new(3);
+        buf.push(0, TensorBatch::from_tensor(col_tensor(&[1.0, 2.0])));
+        // push two rows starting at index 2: one at 2, one wraps to 0
+        buf.push(2, TensorBatch::from_tensor(col_tensor(&[3.0, 4.0])));
+
+        let sampled: Tensor = buf.sample(&vec![0, 1, 2]).into();
+        assert_eq!(
+            Vec::<f32>::try_from(sampled.flatten(0, 1)).unwrap(),
+            vec![4.0, 2.0, 3.0]
+        );
+    }
+
+    #[test]
+    fn clone_is_deep() {
+        let mut buf = TensorBatch::new(2);
+        buf.push(0, TensorBatch::from_tensor(col_tensor(&[1.0, 2.0])));
+        let cloned = buf.clone();
+        // Mutate original in place; clone must be unaffected.
+        buf.push(0, TensorBatch::from_tensor(col_tensor(&[9.0, 9.0])));
+
+        let orig: Tensor = buf.sample(&vec![0, 1]).into();
+        let cln: Tensor = cloned.sample(&vec![0, 1]).into();
+        assert_eq!(Vec::<f32>::try_from(orig.flatten(0, 1)).unwrap(), vec![9.0, 9.0]);
+        assert_eq!(Vec::<f32>::try_from(cln.flatten(0, 1)).unwrap(), vec![1.0, 2.0]);
     }
 }

@@ -6,11 +6,10 @@ pub mod mlp;
 pub mod model;
 pub mod opt;
 pub mod sac;
-mod tensor_batch;
 // pub mod replay_buffer;
 pub mod util;
 use serde::{Deserialize, Serialize};
-pub use tensor_batch::{TensorBatch, ZeroTensor};
+pub use border_generic_replay_buffer::tch::TensorBatch;
 
 #[derive(Clone, Debug, Copy, Deserialize, Serialize, PartialEq)]
 /// Device for using tch-rs.
