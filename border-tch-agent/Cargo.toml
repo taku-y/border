@@ -11,7 +11,7 @@ readme = "README.md"
 
 [dependencies]
 border-core = { version = "0.0.9", path = "../border-core" }
-border-generic-replay-buffer = { version = "0.0.9", path = "../border-generic-replay-buffer" }
+border-generic-replay-buffer = { version = "0.0.9", path = "../border-generic-replay-buffer", features = ["tch"] }
 border-async-trainer = { version = "0.0.9", path = "../border-async-trainer", optional = true }
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true }
