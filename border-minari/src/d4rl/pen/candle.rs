@@ -9,7 +9,7 @@ use crate::{
 use anyhow::Result;
 use candle_core::Tensor;
 use ndarray::{concatenate, ArrayD, Axis, IxDyn, Slice};
-use pyo3::{types::PyIterator, PyAny, PyObject, Python};
+use pyo3::prelude::*;
 use std::convert::TryFrom;
 
 pub type PenAct = NdarrayAct;
@@ -48,12 +48,12 @@ impl PenConverter {
             let mut all_obs = ArrayD::<f32>::zeros(IxDyn(&[0, 45]));
 
             // Collect all observations for calculating mean and std
-            for ep in PyIterator::from_object(py, &episodes)? {
+            for ep in episodes.bind(py).try_iter()? {
                 // ep is minari.dataset.episode_data.EpisodeData
                 let ep = ep?;
                 let obj = ep.getattr("observations")?;
 
-                let obs_batch = pyobj_to_ndarray1(obj)?;
+                let obs_batch = pyobj_to_ndarray1(&obj)?;
                 all_obs = concatenate![Axis(0), all_obs, obs_batch];
             }
 
@@ -80,7 +80,7 @@ impl MinariConverter for PenConverter {
     type ObsBatch = PenObsBatch;
     type ActBatch = PenActBatch;
 
-    fn convert_observation(&self, obj: &PyAny) -> Result<Self::Obs> {
+    fn convert_observation(&self, obj: &Bound<'_, PyAny>) -> Result<Self::Obs> {
         let obs = obj.extract()?;
         let obs = NdarrayObs(pyobj_to_arrayd::<f64, f32>(obs));
         Ok(self.normalize_observation(&obs)?)
@@ -101,7 +101,7 @@ impl MinariConverter for PenConverter {
         Ok(act2)
     }
 
-    fn convert_observation_batch(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         let obs = pyobj_to_ndarray1(obj)?;
         let obs = self.normalize_observation(&NdarrayObs(obs))?;
 
@@ -112,7 +112,7 @@ impl MinariConverter for PenConverter {
         Ok(PenObsBatch::from(arrayd_to_tensor(obs.0, None)?))
     }
 
-    fn convert_observation_batch_next(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch_next(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         let obs = pyobj_to_ndarray2(obj)?;
         let obs = self.normalize_observation(&NdarrayObs(obs))?;
 
@@ -123,9 +123,9 @@ impl MinariConverter for PenConverter {
         Ok(PenObsBatch::from(arrayd_to_tensor(obs.0, None)?))
     }
 
-    fn convert_action_batch(&self, obj: &PyAny) -> Result<Self::ActBatch> {
+    fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
         Ok(PenActBatch::from({
-            let arr = pyobj_to_arrayd::<f32, f32>(obj.into());
+            let arr = pyobj_to_arrayd::<f32, f32>(obj.clone().unbind());
             arrayd_to_tensor(arr, None)?
         }))
     }
@@ -143,18 +143,18 @@ impl MinariConverter for PenConverter {
 }
 
 /// Converts PyObject to `NdArray` and drop the last row.
-fn pyobj_to_ndarray1(obj: &PyAny) -> Result<ArrayD<f32>> {
+fn pyobj_to_ndarray1(obj: &Bound<'_, PyAny>) -> Result<ArrayD<f32>> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.into());
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.clone().unbind());
 
     // Drop the last row
     Ok(arr.slice_axis(Axis(0), Slice::from(..-1)).to_owned())
 }
 
 /// Converts PyObject to `NdArray` and drop the first row.
-fn pyobj_to_ndarray2(obj: &PyAny) -> Result<ArrayD<f32>> {
+fn pyobj_to_ndarray2(obj: &Bound<'_, PyAny>) -> Result<ArrayD<f32>> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.into());
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.clone().unbind());
 
     // Drop the last row
     Ok(arr.slice_axis(Axis(0), Slice::from(1..)).to_owned())

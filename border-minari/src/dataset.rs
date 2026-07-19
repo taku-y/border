@@ -4,10 +4,8 @@ use border_core::{ExperienceBuffer, ReplayBuffer};
 use border_generic_replay_buffer::{
     GenericReplayBuffer, GenericReplayBufferConfig, GenericTransitionBatch,
 };
-use pyo3::{
-    types::{IntoPyDict, PyIterator},
-    PyAny, PyObject, Python, ToPyObject,
-};
+use pyo3::prelude::*;
+use pyo3::types::IntoPyDict;
 
 /// Common interface for Minari datasets.
 pub struct MinariDataset {
@@ -25,7 +23,7 @@ impl MinariDataset {
             let dataset = minari
                 .getattr("load_dataset")?
                 .call1((dataset_id.as_ref(), download))?
-                .to_object(py);
+                .unbind();
             Ok(Self { dataset })
         })
     }
@@ -39,7 +37,7 @@ impl MinariDataset {
             let mut total = 0;
 
             // Iterate over episodes
-            for ep in PyIterator::from_object(py, &episodes)? {
+            for ep in episodes.bind(py).try_iter()? {
                 // ep is minari.dataset.episode_data.EpisodeData
                 let ep = ep?;
                 total += ep
@@ -86,12 +84,12 @@ impl MinariDataset {
                 .call_method1(py, "iterate_episodes", (episode_indices,))?;
 
             // Iterate over episodes
-            for ep in PyIterator::from_object(py, &episodes)? {
+            for ep in episodes.bind(py).try_iter()? {
                 // ep is minari.dataset.episode_data.EpisodeData
                 let ep = ep?;
 
                 // Extract transitions in the episode as a batch
-                let batch = Self::extract_transitions_in_episode(py, &ep, converter)?;
+                let batch = Self::extract_transitions_in_episode(&ep, converter)?;
 
                 // Push the batch to the replay buffer
                 replay_buffer.push(batch)?;
@@ -109,8 +107,7 @@ impl MinariDataset {
     }
 
     fn extract_transitions_in_episode<T: MinariConverter>(
-        py: Python,
-        ep: &PyAny,
+        ep: &Bound<'_, PyAny>,
         converter: &T,
     ) -> Result<GenericTransitionBatch<T::ObsBatch, T::ActBatch>>
     where
@@ -128,9 +125,9 @@ impl MinariDataset {
         let next_obs = converter.convert_observation_batch_next(&obs)?;
         let obs = converter.convert_observation_batch(&obs)?;
         let act = converter.convert_action_batch(&act)?;
-        let reward = util::vec::pyany_to_f32vec(py, &rew)?;
-        let is_terminated = util::vec::pyany_to_vec::<i8>(py, &trm)?;
-        let is_truncated = util::vec::pyany_to_vec::<i8>(py, &trn)?;
+        let reward = util::vec::pyany_to_f32vec(&rew)?;
+        let is_terminated = util::vec::pyany_to_vec::<i8>(&trm)?;
+        let is_truncated = util::vec::pyany_to_vec::<i8>(&trn)?;
 
         Ok(GenericTransitionBatch {
             obs,
@@ -158,14 +155,15 @@ impl MinariDataset {
     ) -> Result<MinariEnv<T>> {
         let env = {
             Python::with_gil(|py| {
-                let mut kwargs: Vec<(&str, PyObject)> =
-                    vec![("render_mode", render_mode.into().to_object(py))];
+                let render_mode_obj = match render_mode.into() {
+                    Some(s) => s.into_pyobject(py).unwrap().into_any().unbind(),
+                    None => py.None(),
+                };
+                let mut kwargs: Vec<(&str, PyObject)> = vec![("render_mode", render_mode_obj)];
                 kwargs.extend(converter.env_params(py));
-                let kwargs = kwargs.into_py_dict(py);
-                let env =
-                    self.dataset
-                        .call_method(py, "recover_environment", (eval_env,), Some(&kwargs));
-                env
+                let kwargs = kwargs.into_py_dict(py)?;
+                self.dataset
+                    .call_method(py, "recover_environment", (eval_env,), Some(&kwargs))
             })?
         };
 

@@ -1,6 +1,7 @@
 # crates
 cargo test -p border-core
 cargo test -p border-py-gym-env
+cargo test -p border-py-gym-env --features tch
 cargo test -p border-async-trainer
 cargo test -p border-atari-env
 cargo test -p border-candle-agent

@@ -150,7 +150,7 @@ impl GymEnv<i32> for AtariRgbEnv {
         let from: ArrayView3<_> = self
             .buf1
             .view()
-            .into_shape(self.state_size())?
+            .into_shape_with_order(self.state_size())?
             .into_dimensionality()?;
         ndarray::parallel::par_azip!((a in &mut out, &b in &from) {*a = b as f32 / 255.0;});
         // ndarray::parallel::par_azip!((a in &mut out, &b in &self.buf1) {*a = b as f32 / 255.0;});

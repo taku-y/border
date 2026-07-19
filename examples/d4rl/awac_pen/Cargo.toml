@@ -1,7 +1,7 @@
 [package]
 name = "awac_pen"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 rust-version = "1.81"
 
 [dependencies]
@@ -9,7 +9,7 @@ log = "0.4"
 anyhow = "1.0.38"
 clap = { version = "4.5.8", features = ["derive"] }
 env_logger = "0.8.2"
-numpy = "0.14.1"
+numpy = "0.25"
 candle-core = { version = "0.8.4", feature = ["cuda", "cudnn"] }
 border-minari = { version = "0.0.9", path = "../../../border-minari", features = [
     "candle",

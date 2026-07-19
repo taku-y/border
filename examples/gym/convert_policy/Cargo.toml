@@ -1,14 +1,14 @@
 [package]
 name = "convert_policy"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 rust-version = "1.81"
 
 [dependencies]
 anyhow = "1.0.38"
 clap = { version = "4.5.8", features = ["derive"] }
 env_logger = "0.8.2"
-numpy = "0.14.1"
+numpy = "0.25"
 border-policy-no-backend = { version = "0.0.9", path = "../../../border-policy-no-backend" }
 border-tch-agent = { version = "0.0.9", path = "../../../border-tch-agent", optional = true }
 border-candle-agent = { version = "0.0.9", path = "../../../border-candle-agent", optional = true }

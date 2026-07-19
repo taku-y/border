@@ -5,8 +5,8 @@ pub mod candle;
 pub mod ndarray {
     use ndarray::ArrayD;
     use num_traits::cast::AsPrimitive;
-    use numpy::{Element, PyArrayDyn};
-    use pyo3::{IntoPy, PyObject};
+    use numpy::{Element, PyArrayDyn, PyArrayMethods};
+    use pyo3::prelude::*;
 
     /// Converts PyObject to ArrayD.
     pub fn pyobj_to_arrayd<T1, T2>(obs: PyObject) -> ArrayD<T2>
@@ -15,7 +15,7 @@ pub mod ndarray {
         T2: 'static + Copy,
     {
         pyo3::Python::with_gil(|py| {
-            let obs: &PyArrayDyn<T1> = obs.extract(py).unwrap();
+            let obs = obs.bind(py).downcast::<PyArrayDyn<T1>>().unwrap();
             let obs = obs.to_owned_array();
             let obs = obs.mapv(|elem| elem.as_());
 
@@ -36,23 +36,24 @@ pub mod ndarray {
         pyo3::Python::with_gil(|py| {
             let act = act.mapv(f64::from);
             let act = PyArrayDyn::<f64>::from_array(py, &act);
-            act.into_py(py)
+            act.into_any().unbind()
         })
     }
 }
 
 pub mod vec {
     use anyhow::Result;
-    use pyo3::{types::PyIterator, FromPyObject, PyAny, Python};
+    use pyo3::prelude::*;
+    use pyo3::types::PyIterator;
 
-    pub fn pyany_to_f32vec(py: Python, pyany: &PyAny) -> Result<Vec<f32>> {
-        let iter = PyIterator::from_object(py, pyany)?.iter()?;
+    pub fn pyany_to_f32vec(pyany: &Bound<'_, PyAny>) -> Result<Vec<f32>> {
+        let iter = PyIterator::from_object(pyany)?;
         let vec = iter.map(|x| Ok(x?.extract::<f32>()?)).collect();
         vec
     }
 
-    pub fn pyany_to_vec<'a, D: FromPyObject<'a>>(py: Python<'a>, pyany: &PyAny) -> Result<Vec<D>> {
-        let iter = PyIterator::from_object(py, pyany)?.iter()?;
+    pub fn pyany_to_vec<'py, D: FromPyObject<'py>>(pyany: &Bound<'py, PyAny>) -> Result<Vec<D>> {
+        let iter = PyIterator::from_object(pyany)?;
         let vec = iter.map(|x| Ok(x?.extract::<D>()?)).collect();
         vec
     }

@@ -6,7 +6,7 @@ use super::{NdarrayAct, NdarrayObs};
 use crate::{util::pyobj_to_arrayd, GymEnvConverter};
 use anyhow::Result;
 use numpy::PyArrayDyn;
-use pyo3::{IntoPy, PyObject};
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -44,7 +44,7 @@ impl GymEnvConverter for NdarrayConverter {
     fn filt_obs(&mut self, obs: PyObject) -> Result<Self::Obs> {
         // ndarray
         let obs = pyo3::Python::with_gil(|py| {
-            if obs.as_ref(py).get_type().name().unwrap() == "NoneType" {
+            if obs.bind(py).is_none() {
                 panic!();
             } else {
                 pyobj_to_arrayd::<f32, f32>(obs)
@@ -60,14 +60,14 @@ impl GymEnvConverter for NdarrayConverter {
             NdarrayAct::Continuous(arrayd) => {
                 let pyobj = pyo3::Python::with_gil(|py| {
                     let act = PyArrayDyn::<f32>::from_array(py, &arrayd);
-                    act.into_py(py)
+                    act.into_any().unbind()
                 });
                 Ok(pyobj)
             }
             NdarrayAct::Discrete(arrayd) => {
                 let pyobj = pyo3::Python::with_gil(|py| {
                     let act = PyArrayDyn::<i64>::from_array(py, &arrayd);
-                    act.into_py(py)
+                    act.into_any().unbind()
                 });
                 Ok(pyobj)
             }

@@ -8,7 +8,7 @@ use crate::{
 use anyhow::Result;
 use border_generic_replay_buffer::BatchBase;
 use ndarray::{s, ArrayD, Axis, IxDyn, Slice};
-use pyo3::{PyAny, PyObject, Python};
+use pyo3::prelude::*;
 
 const DIM_OBS: usize = 27;
 const DIM_ACT: usize = 8;
@@ -125,7 +125,7 @@ impl MinariConverter for AntMazeConverter {
     type ObsBatch = AntMazeObsBatch;
     type ActBatch = AntMazeActBatch;
 
-    fn convert_observation(&self, obj: &PyAny) -> Result<Self::Obs> {
+    fn convert_observation(&self, obj: &Bound<'_, PyAny>) -> Result<Self::Obs> {
         let obs = obj.get_item("observation")?;
         Ok(AntMazeObs {
             obs: pyobj_to_arrayd::<f64, f32>(obs.into()),
@@ -136,21 +136,21 @@ impl MinariConverter for AntMazeConverter {
         Ok(arrayd_to_pyobj(act.action))
     }
 
-    fn convert_observation_batch(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         Ok(AntMazeObsBatch {
             obs: pyobj_to_arrayd1(obj, "observation")?,
         })
     }
 
-    fn convert_observation_batch_next(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch_next(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         Ok(AntMazeObsBatch {
             obs: pyobj_to_arrayd2(obj, "observation")?,
         })
     }
 
-    fn convert_action_batch(&self, obj: &PyAny) -> Result<Self::ActBatch> {
+    fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
         Ok(AntMazeActBatch {
-            action: { pyobj_to_arrayd::<f32, f32>(obj.into()) },
+            action: { pyobj_to_arrayd::<f32, f32>(obj.clone().unbind()) },
         })
     }
 
@@ -160,13 +160,13 @@ impl MinariConverter for AntMazeConverter {
 }
 
 /// Converts PyObject to ArrayD and drop the last row.
-fn pyobj_to_arrayd1(obj: &PyAny, name: &str) -> Result<ArrayD<f32>> {
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+fn pyobj_to_arrayd1(obj: &Bound<'_, PyAny>, name: &str) -> Result<ArrayD<f32>> {
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
     Ok(arr.slice_axis(Axis(0), Slice::from(..-1)).to_owned())
 }
 
 /// Converts PyObject to ArrayD and drop the first row.
-fn pyobj_to_arrayd2(obj: &PyAny, name: &str) -> Result<ArrayD<f32>> {
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+fn pyobj_to_arrayd2(obj: &Bound<'_, PyAny>, name: &str) -> Result<ArrayD<f32>> {
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
     Ok(arr.slice_axis(Axis(0), Slice::from(1..)).to_owned())
 }

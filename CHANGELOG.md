@@ -7,6 +7,10 @@
 * Separate the generic replaybuffer into a separate crate (`border-generic-replay-buffer`).
 * Add NegLossEvaluator (`border-core`).
 * Bump the version of tch to 0.24.0, which requires libtorch v2.11.0 (`border-tch-agent`).
+  This also bumps ndarray (0.15 -> 0.16) to match the version tch links against, which
+  in turn requires numpy (0.14 -> 0.25) and pyo3 (0.14 -> 0.25). The pyo3 upgrade migrates
+  all Python interop to the `Bound` API (`border-py-gym-env`, `border-minari`). The
+  workspace edition is bumped to 2021.
 
 ## v0.0.8 (2025-05-17)
 

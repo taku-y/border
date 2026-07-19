@@ -12,7 +12,7 @@ use anyhow::Result;
 use border_generic_replay_buffer::BatchBase;
 use candle_core::{DType, Device, Tensor};
 use ndarray::{ArrayBase, ArrayD, Axis, Slice};
-use pyo3::{PyAny, PyObject, Python};
+use pyo3::prelude::*;
 
 /// Observation of the Kitchen environment stored as [`Tensor`].
 ///
@@ -180,7 +180,7 @@ impl MinariConverter for KitchenConverter {
     type ObsBatch = KitchenObsBatch;
     type ActBatch = KitchenActBatch;
 
-    fn convert_observation(&self, obj: &PyAny) -> Result<Self::Obs> {
+    fn convert_observation(&self, obj: &Bound<'_, PyAny>) -> Result<Self::Obs> {
         let obs = obj.get_item("observation")?.extract()?;
         Ok(KitchenObs {
             obs: arrayd_to_tensor(pyobj_to_arrayd::<f64, f32>(obs), Some(&[1, 59]))?,
@@ -191,22 +191,22 @@ impl MinariConverter for KitchenConverter {
         Ok(arrayd_to_pyobj(tensor_to_arrayd(act.action)?))
     }
 
-    fn convert_observation_batch(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         Ok(KitchenObsBatch {
             obs: pyobj_to_tensor1(obj, "observation")?,
         })
     }
 
-    fn convert_observation_batch_next(&self, obj: &PyAny) -> Result<Self::ObsBatch> {
+    fn convert_observation_batch_next(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ObsBatch> {
         Ok(KitchenObsBatch {
             obs: pyobj_to_tensor2(obj, "observation")?,
         })
     }
 
-    fn convert_action_batch(&self, obj: &PyAny) -> Result<Self::ActBatch> {
+    fn convert_action_batch(&self, obj: &Bound<'_, PyAny>) -> Result<Self::ActBatch> {
         Ok(KitchenActBatch {
             action: {
-                let arr = pyobj_to_arrayd::<f64, f32>(obj.into());
+                let arr = pyobj_to_arrayd::<f64, f32>(obj.clone().unbind());
                 arrayd_to_tensor(arr, None)?
             },
         })
@@ -218,9 +218,9 @@ impl MinariConverter for KitchenConverter {
 }
 
 /// Converts PyObject to [`candle_core::Tensor`] and drop the last row.
-fn pyobj_to_tensor1(obj: &PyAny, name: &str) -> Result<Tensor> {
+fn pyobj_to_tensor1(obj: &Bound<'_, PyAny>, name: &str) -> Result<Tensor> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
 
     // Drop the last row
     let arr = arr.slice_axis(Axis(0), Slice::from(..-1)).to_owned();
@@ -230,9 +230,9 @@ fn pyobj_to_tensor1(obj: &PyAny, name: &str) -> Result<Tensor> {
 }
 
 /// Converts PyObject to Tensor and drop the first row.
-fn pyobj_to_tensor2(obj: &PyAny, name: &str) -> Result<Tensor> {
+fn pyobj_to_tensor2(obj: &Bound<'_, PyAny>, name: &str) -> Result<Tensor> {
     // From python object to ndarray
-    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.extract()?);
+    let arr = pyobj_to_arrayd::<f64, f32>(obj.get_item(name)?.into());
 
     // Drop the first row
     let arr = arr.slice_axis(Axis(0), Slice::from(1..)).to_owned();
@@ -260,6 +260,6 @@ fn tensor_to_arrayd(tensor: Tensor) -> Result<ArrayD<f32>> {
         .iter()
         .map(|&x| x as usize)
         .collect::<Vec<usize>>();
-    let arr = ArrayBase::from_vec(tensor.flatten_all()?.to_vec1()?).into_shape(shape)?;
+    let arr = ArrayBase::from_vec(tensor.flatten_all()?.to_vec1()?).into_shape_with_order(shape)?;
     Ok(arr)
 }

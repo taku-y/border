@@ -83,6 +83,7 @@ jobs:
               libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-net-dev libsdl2-ttf-dev \
               libsdl2-dev libsdl-image1.2-dev
             cargo test -p border-py-gym-env
+            cargo test -p border-py-gym-env --features tch
             cargo test -p border-async-trainer
             cargo test -p border-atari-env
             cargo test -p border-candle-agent
