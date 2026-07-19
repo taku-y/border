@@ -12,7 +12,7 @@ pub mod sac;
 pub mod util;
 use candle_core::{backend::BackendDevice, DeviceLocation, Module};
 use serde::{Deserialize, Serialize};
-pub use border_generic_replay_buffer::candle::{TensorBatch, ZeroTensor};
+pub use border_generic_replay_buffer::candle::TensorBatch;
 
 #[derive(Clone, Debug, Copy, Deserialize, Serialize, PartialEq)]
 /// Device for using candle.

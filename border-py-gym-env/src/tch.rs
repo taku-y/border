@@ -4,7 +4,7 @@ mod ndarray_obs;
 pub use ndarray_act::NdarrayAct;
 pub use ndarray_converter::{NdarrayConverter, NdarrayConverterConfig};
 pub use ndarray_obs::NdarrayObs;
-pub use border_generic_replay_buffer::tch::{TensorBatch, ZeroTensor};
+pub use border_generic_replay_buffer::tch::TensorBatch;
 
 use ndarray::ArrayD;
 use num_traits::cast::AsPrimitive;

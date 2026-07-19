@@ -14,7 +14,7 @@ pub use ndarray_dict_obs::NdarrayDictObs;
 pub use ndarray_dict_obs_converter::{NdarrayDictObsConverter, NdarrayDictObsConverterConfig};
 pub use ndarray_obs::NdarrayObs;
 use std::convert::TryFrom;
-pub use border_generic_replay_buffer::candle::{TensorBatch, ZeroTensor};
+pub use border_generic_replay_buffer::candle::TensorBatch;
 
 fn arrayd_to_tensor<T1, T2>(a: ArrayD<T1>, add_batch_dim: bool) -> Result<Tensor>
 where

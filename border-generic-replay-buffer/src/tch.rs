@@ -1,38 +1,6 @@
 use crate::BatchBase;
 use ::tch::{Device, Tensor};
 
-/// Adds capability of constructing [`Tensor`] with a static method.
-///
-/// [`Tensor`]: https://docs.rs/tch/0.24.0/tch/struct.Tensor.html
-pub trait ZeroTensor {
-    /// Constructs zero tensor.
-    fn zeros(shape: &[i64]) -> Tensor;
-}
-
-impl ZeroTensor for u8 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, (::tch::kind::Kind::Uint8, Device::Cpu))
-    }
-}
-
-impl ZeroTensor for i32 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, (::tch::kind::Kind::Int, Device::Cpu))
-    }
-}
-
-impl ZeroTensor for f32 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, ::tch::kind::FLOAT_CPU)
-    }
-}
-
-impl ZeroTensor for i64 {
-    fn zeros(shape: &[i64]) -> Tensor {
-        Tensor::zeros(shape, (::tch::kind::Kind::Int64, Device::Cpu))
-    }
-}
-
 /// A buffer consisting of a [`Tensor`].
 ///
 /// The internal buffer of this struct has the shape of `[n_capacity, shape[1..]]`,

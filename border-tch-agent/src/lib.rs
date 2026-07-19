@@ -9,7 +9,7 @@ pub mod sac;
 // pub mod replay_buffer;
 pub mod util;
 use serde::{Deserialize, Serialize};
-pub use border_generic_replay_buffer::tch::{TensorBatch, ZeroTensor};
+pub use border_generic_replay_buffer::tch::TensorBatch;
 
 #[derive(Clone, Debug, Copy, Deserialize, Serialize, PartialEq)]
 /// Device for using tch-rs.

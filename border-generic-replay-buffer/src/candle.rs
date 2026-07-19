@@ -1,31 +1,5 @@
 use crate::BatchBase;
-use candle_core::{error::Result, DType, Device, IndexOp, Tensor};
-
-/// Adds capability of constructing [`Tensor`] with a static method.
-///
-/// [`Tensor`]: https://docs.rs/candle-core/0.4.1/candle_core/struct.Tensor.html
-pub trait ZeroTensor {
-    /// Constructs zero tensor.
-    fn zeros(shape: &[usize]) -> Result<Tensor>;
-}
-
-impl ZeroTensor for u8 {
-    fn zeros(shape: &[usize]) -> Result<Tensor> {
-        Tensor::zeros(shape, DType::U8, &Device::Cpu)
-    }
-}
-
-impl ZeroTensor for f32 {
-    fn zeros(shape: &[usize]) -> Result<Tensor> {
-        Tensor::zeros(shape, DType::F32, &Device::Cpu)
-    }
-}
-
-impl ZeroTensor for i64 {
-    fn zeros(shape: &[usize]) -> Result<Tensor> {
-        Tensor::zeros(shape, DType::I64, &Device::Cpu)
-    }
-}
+use candle_core::{error::Result, Device, IndexOp, Tensor};
 
 /// A buffer consisting of a [`Tensor`].
 ///
