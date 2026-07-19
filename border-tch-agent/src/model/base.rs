@@ -61,7 +61,7 @@ pub trait Model2: ModelBase {
 /// This trait also provide the ability to clone with a given [`VarStore`].
 /// The ability is useful when creating a target network, used in recent deep learning algorithms in common.
 ///
-/// [`VarStore`]: https://docs.rs/tch/0.16.0/tch/nn/struct.VarStore.html
+/// [`VarStore`]: https://docs.rs/tch/0.24.0/tch/nn/struct.VarStore.html
 pub trait SubModel {
     /// Configuration from which [`SubModel`] is constructed.
     type Config;
@@ -77,7 +77,7 @@ pub trait SubModel {
 
     /// Clones [`SubModel`] with [`VarStore`].
     ///
-    /// [`VarStore`]: https://docs.rs/tch/0.16.0/tch/nn/struct.VarStore.html
+    /// [`VarStore`]: https://docs.rs/tch/0.24.0/tch/nn/struct.VarStore.html
     fn clone_with_var_store(&self, var_store: &VarStore) -> Self;
 
     /// A generalized forward function.
@@ -88,7 +88,7 @@ pub trait SubModel {
 ///
 /// The difference from [`SubModel`] is that this trait takes two inputs.
 ///
-/// [`VarStore`]: https://docs.rs/tch/0.16.0/tch/nn/struct.VarStore.html
+/// [`VarStore`]: https://docs.rs/tch/0.24.0/tch/nn/struct.VarStore.html
 pub trait SubModel2 {
     /// Configuration from which [`SubModel2`] is constructed.
     type Config;
@@ -107,7 +107,7 @@ pub trait SubModel2 {
 
     /// Clones [`SubModel2`] with [`VarStore`].
     ///
-    /// [`VarStore`]: https://docs.rs/tch/0.16.0/tch/nn/struct.VarStore.html
+    /// [`VarStore`]: https://docs.rs/tch/0.24.0/tch/nn/struct.VarStore.html
     fn clone_with_var_store(&self, var_store: &VarStore) -> Self;
 
     /// A generalized forward function.

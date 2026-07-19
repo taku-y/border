@@ -3,7 +3,7 @@ use tch::{Device, Tensor};
 
 /// Adds capability of constructing [`Tensor`] with a static method.
 ///
-/// [`Tensor`]: https://docs.rs/tch/0.16.0/tch/struct.Tensor.html
+/// [`Tensor`]: https://docs.rs/tch/0.24.0/tch/struct.Tensor.html
 pub trait ZeroTensor {
     /// Constructs zero tensor.
     fn zeros(shape: &[i64]) -> Tensor;
@@ -40,7 +40,7 @@ impl ZeroTensor for i64 {
 /// [`TensorBatch::push`] method. `[1..]` means that the first axis of the
 /// given data is ignored as it might be batch size.
 ///
-/// [`Tensor`]: https://docs.rs/tch/0.16.0/tch/struct.Tensor.html
+/// [`Tensor`]: https://docs.rs/tch/0.24.0/tch/struct.Tensor.html
 pub struct TensorBatch {
     buf: Option<Tensor>,
     capacity: i64,

@@ -13,7 +13,7 @@ border-policy-no-backend = { version = "0.0.9", path = "../../../border-policy-n
 border-core = { version = "0.0.9", path = "../../../border-core" }
 border-py-gym-env = { version = "0.0.9", path = "../../../border-py-gym-env" }
 serde = "1.0.194"
-# tch = "0.16.0"
+# tch = "0.24.0"
 bincode = "1.3.3"
 pyo3 = { version = "=0.14.5", default-features = false }
 ndarray = "0.15.1"

@@ -6,6 +6,7 @@
 
 * Separate the generic replaybuffer into a separate crate (`border-generic-replay-buffer`).
 * Add NegLossEvaluator (`border-core`).
+* Bump the version of tch to 0.24.0, which requires libtorch v2.11.0 (`border-tch-agent`).
 
 ## v0.0.8 (2025-05-17)
 

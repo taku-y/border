@@ -30,7 +30,7 @@ readme = "README.md"
 clap = { version = "4.5.8", features = ["derive"] }
 csv = "1.1.5"
 fastrand = "1.4.0"
-tch = "0.16.0"
+tch = "0.24.0"
 anyhow = "1.0.38"
 crossbeam-channel = "0.5.1"
 serde_yaml = "0.8.7"
